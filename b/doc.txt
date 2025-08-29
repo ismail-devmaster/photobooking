@@ -1,0 +1,220 @@
+# Photobooking Backend API Documentation
+
+## Base URL
+- Local: `http://localhost:5000`
+
+## Health
+- Method: `GET`
+- Path: `/health`
+- Auth: None
+- Response:
+```json
+{ "status": "ok" }
+```
+
+---
+
+## Auth API
+Base path: `/api/v1/auth`
+
+### 1) Register
+- Method: `POST`
+- Path: `/api/v1/auth/register`
+- Body (JSON):
+```json
+{ "email": "user@example.com", "password": "StrongPass123", "name": "User Name" }
+```
+- Response 201:
+```json
+{ "message": "User created. Please check your email to verify your account." }
+```
+- Errors: 400 (validation/email in use)
+
+Example:
+```bash
+curl -X POST http://localhost:5000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"Passw0rd!","name":"User"}'
+```
+
+### 2) Verify Email
+- Method: `GET`
+- Path: `/api/v1/auth/verify-email`
+- Query: `token=<string>&uid=<userId>`
+- Sets HttpOnly refresh token cookie. Returns access token.
+- Response 200:
+```json
+{ "message": "Email verified", "accessToken": "<JWT>" }
+```
+- Errors: 400 (invalid/missing token)
+
+Example:
+```bash
+curl "http://localhost:5000/api/v1/auth/verify-email?token=...&uid=..." -i
+```
+
+### 3) Resend Verification Email
+- Method: `POST`
+- Path: `/api/v1/auth/resend-verification`
+- Body (JSON):
+```json
+{ "email": "user@example.com" }
+```
+- Response 200:
+```json
+{ "message": "Verification email resent" }
+```
+- Errors: 400 (already verified, missing email), 404 (user not found), 500
+
+Example:
+```bash
+curl -X POST http://localhost:5000/api/v1/auth/resend-verification \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com"}'
+```
+
+### 4) Login
+- Method: `POST`
+- Path: `/api/v1/auth/login`
+- Body (JSON):
+```json
+{ "email": "user@example.com", "password": "Passw0rd!" }
+```
+- Sets HttpOnly refresh token cookie. Returns access token and user info.
+- Response 200:
+```json
+{
+  "user": { "id": "<id>", "email": "user@example.com", "name": "User" },
+  "accessToken": "<JWT>"
+}
+```
+- Errors: 400 (missing fields), 401 (invalid credentials), 403 (email not verified), 500
+
+Example:
+```bash
+curl -X POST http://localhost:5000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"Passw0rd!"}' -i
+```
+
+### 5) Refresh Access Token (Cookie-based)
+- Method: `POST`
+- Path: `/api/v1/auth/refresh`
+- Requires refresh token cookie: name defaults to `rb_refresh` (configurable via env).
+- Rotates refresh token cookie and returns new access token.
+- Response 200:
+```json
+{ "accessToken": "<JWT>" }
+```
+- Errors: 401 (missing/invalid/expired/revoked refresh), 400
+
+Example:
+```bash
+curl -X POST http://localhost:5000/api/v1/auth/refresh -i \
+  --cookie "rb_refresh=<your_refresh_cookie_value>"
+```
+
+### 6) Logout
+- Method: `POST`
+- Path: `/api/v1/auth/logout`
+- Uses refresh cookie (if present) to revoke it and clears cookie.
+- Response 200:
+```json
+{ "ok": true }
+```
+- Errors: 500
+
+Example:
+```bash
+curl -X POST http://localhost:5000/api/v1/auth/logout -i \
+  --cookie "rb_refresh=<your_refresh_cookie_value>"
+```
+
+### 7) Get Current User (Protected)
+- Method: `GET`
+- Path: `/api/v1/auth/me`
+- Auth: Bearer access token in `Authorization` header.
+  - `Authorization: Bearer <accessToken>`
+- Response 200:
+```json
+{ "id": "<id>", "email": "user@example.com", "name": "User", "role": "<role>" }
+```
+- Errors: 401 (missing/invalid token), 403 (email not verified), 404 (user not found)
+
+Example:
+```bash
+curl http://localhost:5000/api/v1/auth/me \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+Notes:
+- Cookies: `rb_refresh` is HttpOnly; flags `secure`, `sameSite`, name and expiry are configurable via env: `COOKIE_NAME`, `COOKIE_SECURE`, `COOKIE_HTTP_ONLY`, `COOKIE_SAME_SITE`, `REFRESH_TOKEN_EXPIRES_DAYS`.
+
+---
+
+## OAuth API
+Base path: `/api/v1/auth/oauth`
+
+### 1) Google OAuth Start
+- Method: `GET`
+- Path: `/api/v1/auth/oauth/google`
+- Redirects to Google consent screen. No body.
+
+### 2) Google OAuth Callback
+- Method: `GET`
+- Path: `/api/v1/auth/oauth/google/callback`
+- On success: sets refresh cookie and returns JSON with `user` and `accessToken`.
+- Response 200:
+```json
+{
+  "user": { "id": "<id>", "email": "user@example.com", "name": "User" },
+  "accessToken": "<JWT>"
+}
+```
+- On failure: redirects to `/auth/oauth/failure` and/or 500 JSON error.
+
+### 3) Facebook OAuth Start
+- Method: `GET`
+- Path: `/api/v1/auth/oauth/facebook`
+- Redirects to Facebook consent screen.
+
+### 4) Facebook OAuth Callback
+- Method: `GET`
+- Path: `/api/v1/auth/oauth/facebook/callback`
+- On success: sets refresh cookie and returns JSON with `user` and `accessToken`.
+- Response 200 same as Google callback.
+
+### 5) OAuth Mock (Dev/Testing)
+- Method: `POST`
+- Path: `/api/v1/auth/oauth/mock`
+- Body (JSON):
+```json
+{ "provider": "google|facebook|mock", "providerId": "<id>", "email": "user@example.com", "name": "User" }
+```
+- Response 200:
+```json
+{
+  "user": { "id": "<id>", "email": "user@example.com", "name": "User" },
+  "accessToken": "<JWT>"
+}
+```
+- Errors: 400 (missing provider/providerId), 500
+
+Example:
+```bash
+curl -X POST http://localhost:5000/api/v1/auth/oauth/mock \
+  -H "Content-Type: application/json" \
+  -d '{"provider":"mock","providerId":"123","email":"user@example.com","name":"User"}' -i
+```
+
+---
+
+## Error Format
+- Errors are returned as JSON, e.g.:
+```json
+{ "error": "Message" }
+```
+
+## Authentication Summary
+- Access token: JWT returned by login/refresh/verify-email/OAuth callbacks; send via `Authorization: Bearer <token>` to protected routes like `/api/v1/auth/me`.
+- Refresh token: HttpOnly cookie (default name `rb_refresh`) managed by server; used on `/api/v1/auth/refresh` and revoked on `/api/v1/auth/logout`.

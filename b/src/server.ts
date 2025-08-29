@@ -5,6 +5,8 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import oauthRoutes from './routes/oauth.routes';
+import profileRoutes from './routes/profile.routes';
+
 import './config/passport'; // initialize passport strategies
 import passport from 'passport';
 
@@ -20,6 +22,8 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/auth/oauth', oauthRoutes);
+app.use('/api/v1', profileRoutes);
+
 
 // global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

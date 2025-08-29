@@ -92,6 +92,8 @@ model User {
   messages           Message[]
   notifications      Notification[]
   reviews            Review[]
+  stateId            String? // nullable - user may not set state
+  state              State?              @relation("UserState", fields: [stateId], references: [id])
 
   @@index([email])
   @@index([role])
@@ -154,6 +156,11 @@ model Photographer {
   portfolios Portfolio[]
   bookings   Booking[]   @relation("PhotographerBookings")
   reviews    Review[]
+  stateId    String? // photographer location state
+  state      State?      @relation("PhotographerState", fields: [stateId], references: [id])
+
+  // services relation (many-to-many)
+  services Service[]
 
   @@index([verified, ratingAvg])
   @@index([priceBaseline])
@@ -300,6 +307,32 @@ model Review {
   @@index([reviewerId])
   @@index([photographerId])
   @@index([status, createdAt])
+}
+
+model State {
+  id        String   @id @default(cuid())
+  code      String   @unique // e.g. "DZ-16" or short code
+  name      String
+  createdAt DateTime @default(now())
+
+  users         User[]         @relation("UserState")
+  photographers Photographer[] @relation("PhotographerState")
+
+  @@index([code])
+  @@index([name])
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  photographers Photographer[] // many-to-many implicit relation
+
+  @@index([slug])
+  @@index([name])
 }
 
 model Notification {
