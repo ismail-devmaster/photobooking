@@ -1,0 +1,73 @@
+# Dependencies
+b/node_modules/
+
+# Environment variables
+.env
+node_modules
+b/.env
+b/.env.local
+b/.env.development
+b/.env.test
+b/.env.production
+
+# Logs
+b/logs
+b/*.log
+b/npm-debug.log*
+b/yarn-debug.log*
+b/yarn-error.log*
+
+# Runtime data
+b/pids
+b/*.pid
+b/*.seed
+b/*.pid.lock
+
+# Coverage directory used by tools like istanbul
+b/coverage/
+
+# nyc test coverage
+b/.nyc_output
+
+# Dependency directories
+b/jspm_packages/
+
+# Optional npm cache directory
+b/.npm
+
+# Optional REPL history
+b/.node_repl_history
+
+# Output of 'npm pack'
+b/*.tgz
+
+# Yarn Integrity file
+b/.yarn-integrity
+
+# dotenv environment variables file
+b/.env
+
+# parcel-bundler cache (https://parceljs.org/)
+b/.cache
+b/.parcel-cache
+
+# next.js build output
+b/.next
+
+# nuxt.js build output
+b/.nuxt
+
+# vuepress build output
+b/.vuepress/dist
+
+# Serverless directories
+b/.serverless
+
+# FuseBox cache
+b/.fusebox/
+
+# DynamoDB Local files
+b/.dynamodb/
+
+# TernJS port file
+b/.tern-port
