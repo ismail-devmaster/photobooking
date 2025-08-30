@@ -6,6 +6,9 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import oauthRoutes from './routes/oauth.routes';
 import profileRoutes from './routes/profile.routes';
+import packageRoutes from './routes/package.routes';
+import galleryRoutes from './routes/gallery.routes';
+import path from 'path';
 
 import './config/passport'; // initialize passport strategies
 import passport from 'passport';
@@ -23,6 +26,10 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/auth/oauth', oauthRoutes);
 app.use('/api/v1', profileRoutes);
+app.use('/api/v1/packages', packageRoutes);
+app.use('/api/v1/gallery', galleryRoutes);
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 
 
 // global error handler

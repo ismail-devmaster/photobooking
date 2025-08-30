@@ -1,220 +1,123 @@
-# Photobooking Backend API Documentation
+# ملخص شامل لمشروع PhotoBooking
 
-## Base URL
-- Local: `http://localhost:5000`
+## نظرة عامة على المشروع
+مشروع PhotoBooking هو منصة رقمية متكاملة تهدف إلى ربط العملاء بمصورين محترفين لحجز جلسات التصوير. يوفر المشروع نظام حجز متطور مع إدارة العقود والمدفوعات والمراجعات.
 
-## Health
-- Method: `GET`
-- Path: `/health`
-- Auth: None
-- Response:
-```json
-{ "status": "ok" }
+## التقنيات المستخدمة
+
+### Backend Framework
+- **Node.js** مع **Express.js 5.1.0** - إطار عمل خادم الويب
+- **TypeScript 5.9.2** - لكتابة كود آمن ومنظم
+- **Prisma 6.15.0** - ORM متقدم لإدارة قاعدة البيانات
+
+### قاعدة البيانات
+- **PostgreSQL** - قاعدة بيانات علائقية قوية
+- **Prisma Schema** - تصميم قاعدة بيانات متقدم مع نماذج متعددة
+
+### المصادقة والأمان
+- **Passport.js** - استراتيجيات مصادقة متعددة
+- **JWT (JSON Web Tokens)** - لإدارة الجلسات
+- **OAuth 2.0** - دعم تسجيل الدخول بـ Google و Facebook
+- **bcryptjs** - تشفير كلمات المرور
+- **Helmet** - حماية التطبيق من الثغرات الأمنية
+
+### خدمات إضافية
+- **Nodemailer** - إرسال رسائل البريد الإلكتروني
+- **Morgan** - تسجيل طلبات HTTP
+- **Cookie Parser** - إدارة ملفات تعريف الارتباط
+
+### أدوات التطوير
+- **ESLint & Prettier** - تنسيق وتدقيق الكود
+- **Jest** - اختبارات الوحدة والتكامل
+- **Husky & lint-staged** - hooks لـ Git
+- **ts-node-dev** - تطوير سريع مع TypeScript
+
+## هيكل المشروع
+
+### النماذج الأساسية (Core Models)
+1. **User** - المستخدمين (عملاء، مصورين، مدراء)
+2. **Photographer** - معلومات المصورين المحترفين
+3. **Booking** - حجوزات جلسات التصوير
+4. **Contract** - العقود القانونية
+5. **Payment** - إدارة المدفوعات
+6. **Review** - تقييمات ومراجعات العملاء
+7. **Portfolio** - معارض أعمال المصورين
+8. **Conversation & Message** - نظام المحادثات
+
+### حالات النظام (Enums)
+- **BookingState**: draft, requested, confirmed, completed, cancelled
+- **PaymentStatus**: pending, succeeded, failed, refunded
+- **ContractStatus**: generated, sent, signed, declined
+- **Role**: CLIENT, PHOTOGRAPHER, ADMIN
+
+### البنية المعمارية
+```
+src/
+├── controllers/     # منطق التحكم في الطلبات
+├── services/        # منطق الأعمال
+├── routes/          # مسارات API
+├── middlewares/     # وسائط معالجة الطلبات
+├── config/          # إعدادات التطبيق
+├── utils/           # أدوات مساعدة
+├── validators/      # التحقق من صحة البيانات
+└── __tests__/       # اختبارات التطبيق
 ```
 
----
+## الميزات الرئيسية
 
-## Auth API
-Base path: `/api/v1/auth`
+### 1. نظام المستخدمين والمصادقة
+- تسجيل دخول متعدد (بريد إلكتروني، Google، Facebook)
+- إدارة الأدوار والصلاحيات
+- التحقق من البريد الإلكتروني
+- إدارة الجلسات مع JWT
 
-### 1) Register
-- Method: `POST`
-- Path: `/api/v1/auth/register`
-- Body (JSON):
-```json
-{ "email": "user@example.com", "password": "StrongPass123", "name": "User Name" }
-```
-- Response 201:
-```json
-{ "message": "User created. Please check your email to verify your account." }
-```
-- Errors: 400 (validation/email in use)
+### 2. إدارة المصورين
+- ملفات شخصية شاملة مع السير الذاتية
+- معارض أعمال رقمية
+- نظام تقييمات ومراجعات
+- تحديد الأسعار والخدمات
 
-Example:
-```bash
-curl -X POST http://localhost:5000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"Passw0rd!","name":"User"}'
-```
+### 3. نظام الحجوزات
+- حجز جلسات التصوير
+- تتبع حالة الحجز
+- إدارة المواعيد والمواقع
+- تاريخ تغييرات الحالة
 
-### 2) Verify Email
-- Method: `GET`
-- Path: `/api/v1/auth/verify-email`
-- Query: `token=<string>&uid=<userId>`
-- Sets HttpOnly refresh token cookie. Returns access token.
-- Response 200:
-```json
-{ "message": "Email verified", "accessToken": "<JWT>" }
-```
-- Errors: 400 (invalid/missing token)
+### 4. العقود والمدفوعات
+- إنشاء عقود رقمية
+- توقيع إلكتروني
+- دمج مع بوابات الدفع
+- إدارة المدفوعات والاسترداد
 
-Example:
-```bash
-curl "http://localhost:5000/api/v1/auth/verify-email?token=...&uid=..." -i
-```
+### 5. التواصل والمراجعات
+- نظام محادثات داخلي
+- إرسال إشعارات
+- تقييمات العملاء
+- نظام مراجعة المحتوى
 
-### 3) Resend Verification Email
-- Method: `POST`
-- Path: `/api/v1/auth/resend-verification`
-- Body (JSON):
-```json
-{ "email": "user@example.com" }
-```
-- Response 200:
-```json
-{ "message": "Verification email resent" }
-```
-- Errors: 400 (already verified, missing email), 404 (user not found), 500
+### 6. الأمان والحماية
+- تشفير كلمات المرور
+- حماية من الثغرات الأمنية
+- إدارة الجلسات الآمنة
+- التحقق من صحة البيانات
 
-Example:
-```bash
-curl -X POST http://localhost:5000/api/v1/auth/resend-verification \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com"}'
-```
+## نقاط القوة
+- تصميم قاعدة بيانات متقدم ومتسق
+- بنية معمارية نظيفة ومنظمة
+- دعم متعدد اللغات
+- نظام مصادقة قوي ومتعدد
+- اختبارات شاملة
+- أدوات تطوير متقدمة
 
-### 4) Login
-- Method: `POST`
-- Path: `/api/v1/auth/login`
-- Body (JSON):
-```json
-{ "email": "user@example.com", "password": "Passw0rd!" }
-```
-- Sets HttpOnly refresh token cookie. Returns access token and user info.
-- Response 200:
-```json
-{
-  "user": { "id": "<id>", "email": "user@example.com", "name": "User" },
-  "accessToken": "<JWT>"
-}
-```
-- Errors: 400 (missing fields), 401 (invalid credentials), 403 (email not verified), 500
+## الاستخدامات
+- منصات حجز خدمات التصوير
+- تطبيقات المصورين المحترفين
+- أنظمة إدارة المشاريع الإبداعية
+- منصات الخدمات المهنية
 
-Example:
-```bash
-curl -X POST http://localhost:5000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"Passw0rd!"}' -i
-```
-
-### 5) Refresh Access Token (Cookie-based)
-- Method: `POST`
-- Path: `/api/v1/auth/refresh`
-- Requires refresh token cookie: name defaults to `rb_refresh` (configurable via env).
-- Rotates refresh token cookie and returns new access token.
-- Response 200:
-```json
-{ "accessToken": "<JWT>" }
-```
-- Errors: 401 (missing/invalid/expired/revoked refresh), 400
-
-Example:
-```bash
-curl -X POST http://localhost:5000/api/v1/auth/refresh -i \
-  --cookie "rb_refresh=<your_refresh_cookie_value>"
-```
-
-### 6) Logout
-- Method: `POST`
-- Path: `/api/v1/auth/logout`
-- Uses refresh cookie (if present) to revoke it and clears cookie.
-- Response 200:
-```json
-{ "ok": true }
-```
-- Errors: 500
-
-Example:
-```bash
-curl -X POST http://localhost:5000/api/v1/auth/logout -i \
-  --cookie "rb_refresh=<your_refresh_cookie_value>"
-```
-
-### 7) Get Current User (Protected)
-- Method: `GET`
-- Path: `/api/v1/auth/me`
-- Auth: Bearer access token in `Authorization` header.
-  - `Authorization: Bearer <accessToken>`
-- Response 200:
-```json
-{ "id": "<id>", "email": "user@example.com", "name": "User", "role": "<role>" }
-```
-- Errors: 401 (missing/invalid token), 403 (email not verified), 404 (user not found)
-
-Example:
-```bash
-curl http://localhost:5000/api/v1/auth/me \
-  -H "Authorization: Bearer <ACCESS_TOKEN>"
-```
-
-Notes:
-- Cookies: `rb_refresh` is HttpOnly; flags `secure`, `sameSite`, name and expiry are configurable via env: `COOKIE_NAME`, `COOKIE_SECURE`, `COOKIE_HTTP_ONLY`, `COOKIE_SAME_SITE`, `REFRESH_TOKEN_EXPIRES_DAYS`.
-
----
-
-## OAuth API
-Base path: `/api/v1/auth/oauth`
-
-### 1) Google OAuth Start
-- Method: `GET`
-- Path: `/api/v1/auth/oauth/google`
-- Redirects to Google consent screen. No body.
-
-### 2) Google OAuth Callback
-- Method: `GET`
-- Path: `/api/v1/auth/oauth/google/callback`
-- On success: sets refresh cookie and returns JSON with `user` and `accessToken`.
-- Response 200:
-```json
-{
-  "user": { "id": "<id>", "email": "user@example.com", "name": "User" },
-  "accessToken": "<JWT>"
-}
-```
-- On failure: redirects to `/auth/oauth/failure` and/or 500 JSON error.
-
-### 3) Facebook OAuth Start
-- Method: `GET`
-- Path: `/api/v1/auth/oauth/facebook`
-- Redirects to Facebook consent screen.
-
-### 4) Facebook OAuth Callback
-- Method: `GET`
-- Path: `/api/v1/auth/oauth/facebook/callback`
-- On success: sets refresh cookie and returns JSON with `user` and `accessToken`.
-- Response 200 same as Google callback.
-
-### 5) OAuth Mock (Dev/Testing)
-- Method: `POST`
-- Path: `/api/v1/auth/oauth/mock`
-- Body (JSON):
-```json
-{ "provider": "google|facebook|mock", "providerId": "<id>", "email": "user@example.com", "name": "User" }
-```
-- Response 200:
-```json
-{
-  "user": { "id": "<id>", "email": "user@example.com", "name": "User" },
-  "accessToken": "<JWT>"
-}
-```
-- Errors: 400 (missing provider/providerId), 500
-
-Example:
-```bash
-curl -X POST http://localhost:5000/api/v1/auth/oauth/mock \
-  -H "Content-Type: application/json" \
-  -d '{"provider":"mock","providerId":"123","email":"user@example.com","name":"User"}' -i
-```
-
----
-
-## Error Format
-- Errors are returned as JSON, e.g.:
-```json
-{ "error": "Message" }
-```
-
-## Authentication Summary
-- Access token: JWT returned by login/refresh/verify-email/OAuth callbacks; send via `Authorization: Bearer <token>` to protected routes like `/api/v1/auth/me`.
-- Refresh token: HttpOnly cookie (default name `rb_refresh`) managed by server; used on `/api/v1/auth/refresh` and revoked on `/api/v1/auth/logout`.
+## التطوير المستقبلي
+- تطبيق جوال (React Native/Flutter)
+- نظام دفع متقدم
+- تحليلات وإحصائيات
+- نظام توصيات ذكي
+- دعم المزيد من مزودي OAuth

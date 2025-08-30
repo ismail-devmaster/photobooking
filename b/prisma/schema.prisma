@@ -161,6 +161,10 @@ model Photographer {
 
   // services relation (many-to-many)
   services Service[]
+  
+  // packages and gallery images
+  packages      Package[]
+  galleryImages GalleryImage[]
 
   @@index([verified, ratingAvg])
   @@index([priceBaseline])
@@ -308,6 +312,33 @@ model Review {
   @@index([photographerId])
   @@index([status, createdAt])
 }
+
+model Package {
+  id             String   @id @default(cuid())
+  photographerId String
+  title          String
+  description    String?
+  priceCents     Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  photographer Photographer @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+
+  @@index([photographerId])
+}
+ 
+model GalleryImage {
+  id            String   @id @default(cuid())
+  photographerId String
+  url           String
+  meta          Json?
+  createdAt     DateTime @default(now())
+
+  photographer Photographer @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+
+  @@index([photographerId])
+}
+
 
 model State {
   id        String   @id @default(cuid())

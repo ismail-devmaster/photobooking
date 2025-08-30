@@ -47,7 +47,11 @@ export async function createSessionTokens(userId: string) {
   });
 
   // create access token
-  const accessToken = signAccessToken({ sub: userId });
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error('User not found');
+  const accessToken = signAccessToken({ sub: user.id, role: user.role, email: user.email });
+
+
   return {
     accessToken,
     refreshToken: plainToken, // return plain to client via cookie
