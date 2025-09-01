@@ -10,6 +10,8 @@ import packageRoutes from './routes/package.routes';
 import galleryRoutes from './routes/gallery.routes';
 import path from 'path';
 import bookingRoutes from './routes/booking.routes';
+import favoritesRoutes from './routes/favorite.routes';
+
 
 
 import './config/passport'; // initialize passport strategies
@@ -32,6 +34,7 @@ app.use('/api/v1/packages', packageRoutes);
 app.use('/api/v1/gallery', galleryRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/v1/bookings', bookingRoutes);
+app.use('/api/v1/favorites', favoritesRoutes);
 
 
 

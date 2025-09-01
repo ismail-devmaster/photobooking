@@ -92,6 +92,7 @@ model User {
   messages           Message[]
   notifications      Notification[]
   reviews            Review[]
+  favorites          Favorite[]
   stateId            String? // nullable - user may not set state
   state              State?              @relation("UserState", fields: [stateId], references: [id])
 
@@ -156,12 +157,13 @@ model Photographer {
   portfolios Portfolio[]
   bookings   Booking[]   @relation("PhotographerBookings")
   reviews    Review[]
+  favorites  Favorite[]
   stateId    String? // photographer location state
   state      State?      @relation("PhotographerState", fields: [stateId], references: [id])
 
   // services relation (many-to-many)
   services Service[]
-  
+
   // packages and gallery images
   packages      Package[]
   galleryImages GalleryImage[]
@@ -313,6 +315,20 @@ model Review {
   @@index([status, createdAt])
 }
 
+model Favorite {
+  id             String   @id @default(cuid())
+  userId         String
+  photographerId String
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photographer Photographer @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, photographerId])
+  @@index([userId])
+  @@index([photographerId])
+}
+
 model Package {
   id             String   @id @default(cuid())
   photographerId String
@@ -326,19 +342,18 @@ model Package {
 
   @@index([photographerId])
 }
- 
+
 model GalleryImage {
-  id            String   @id @default(cuid())
+  id             String   @id @default(cuid())
   photographerId String
-  url           String
-  meta          Json?
-  createdAt     DateTime @default(now())
+  url            String
+  meta           Json?
+  createdAt      DateTime @default(now())
 
   photographer Photographer @relation(fields: [photographerId], references: [id], onDelete: Cascade)
 
   @@index([photographerId])
 }
-
 
 model State {
   id        String   @id @default(cuid())
