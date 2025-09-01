@@ -2,17 +2,19 @@
 import express from 'express';
 import morgan from 'morgan';
 import helmet from 'helmet';
+import path from 'path';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import oauthRoutes from './routes/oauth.routes';
 import profileRoutes from './routes/profile.routes';
 import packageRoutes from './routes/package.routes';
 import galleryRoutes from './routes/gallery.routes';
-import path from 'path';
 import bookingRoutes from './routes/booking.routes';
 import favoritesRoutes from './routes/favorite.routes';
 import reviewRoutes from './routes/review.routes';
 import adminReviewRoutes from './routes/admin.review.routes';
+import conversationRoutes from './routes/conversation.routes';
+import messageRoutes from './routes/message.routes';
 
 import './config/passport'; // initialize passport strategies
 import passport from 'passport';
@@ -25,6 +27,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/v1/auth', authRoutes);
@@ -37,6 +40,8 @@ app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/favorites', favoritesRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/admin/reviews', adminReviewRoutes);
+app.use('/api/v1/conversations', conversationRoutes);
+app.use('/api/v1/messages', messageRoutes);
 
 // global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
