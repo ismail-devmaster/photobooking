@@ -1,6 +1,7 @@
 // src/services/message.service.ts
 import { prisma } from '../config/prisma';
 import { NotificationType } from '@prisma/client';
+import * as notificationService from './notification.service';
 
 type AttachmentMeta = {
   filename: string;
@@ -40,13 +41,9 @@ export async function createMessage(conversationId: string, senderId: string, co
   // create notification for the other participant
   const otherUserId = conversation.participantAId === senderId ? conversation.participantBId : conversation.participantAId;
   if (otherUserId) {
-    await prisma.notification.create({
-      data: {
-        userId: otherUserId,
-        type: NotificationType.MESSAGE_RECEIVED,
-        payload: { conversationId, messageId: msg.id, senderId } as any,
-      },
-    });
+await notificationService.createNotification(otherUserId, NotificationType.MESSAGE_RECEIVED, {
+  conversationId, messageId: msg.id, senderId,
+});
   }
 
   return msg;

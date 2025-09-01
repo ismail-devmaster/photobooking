@@ -1,6 +1,9 @@
 // src/services/review.service.ts
 import { prisma } from '../config/prisma';
 import { ReviewStatus, NotificationType } from '@prisma/client';
+import { emitToUser } from '../lib/socket';
+
+type CreatedNotification = { userId: string; type: NotificationType; payload: any };
 
 /**
  * Create a review for a completed booking.
@@ -9,48 +12,64 @@ import { ReviewStatus, NotificationType } from '@prisma/client';
  * - creates Review (status: PENDING)
  * - creates Notification for photographer (REVIEW_RECEIVED)
  */
-export async function createReview(reviewerId: string, payload: {
-  bookingId: string;
-  rating: number;
-  text?: string | null;
-}) {
+export async function createReview(
+  reviewerId: string,
+  payload: { bookingId: string; rating: number; text?: string | null }
+) {
   const { bookingId, rating, text } = payload;
 
-  // load booking
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { photographer: { select: { id: true, userId: true } } },
   });
   if (!booking) throw new Error('Booking not found');
   if (booking.clientId !== reviewerId) throw new Error('Not allowed to review this booking');
-  // require booking completed
   if (booking.state !== 'completed') throw new Error('Review allowed only after booking completed');
 
-  // create review (unique constraint bookingId prevents duplicates)
-  const review = await prisma.review.create({
-    data: {
-      bookingId,
-      photographerId: booking.photographerId,
-      reviewerId,
-      rating,
-      text: text ?? null,
-      status: ReviewStatus.PENDING, // moderation required
-    },
+  let createdNotification: CreatedNotification | null = null;
+
+  const review = await prisma.$transaction(async (tx) => {
+    const r = await tx.review.create({
+      data: {
+        bookingId,
+        photographerId: booking.photographerId,
+        reviewerId,
+        rating,
+        text: text ?? null,
+        status: ReviewStatus.PENDING,
+      },
+    });
+
+    if (booking.photographer?.userId) {
+      const notif = await tx.notification.create({
+        data: {
+          userId: booking.photographer.userId,
+          type: NotificationType.REVIEW_RECEIVED,
+          payload: {
+            reviewId: r.id,
+            bookingId,
+            rating,
+            reviewerId,
+          } as any,
+        },
+      });
+
+      createdNotification = {
+        userId: booking.photographer.userId,
+        type: notif.type,
+        payload: notif.payload,
+      };
+    }
+
+    return r;
   });
 
-  // notify photographer in-app
-  await prisma.notification.create({
-    data: {
-      userId: booking.photographer.userId,
-      type: NotificationType.REVIEW_RECEIVED,
-      payload: {
-        reviewId: review.id,
-        bookingId,
-        rating,
-        reviewerId,
-      } as any,
-    },
-  });
+  // بعد نجاح الـ transaction: بث الإشعار إن وُجد (آمن للـ typescript)
+  if (createdNotification) {
+    const { userId, type, payload } = createdNotification;
+    // userId و type و payload كلها الآن مضمونة الوجود وtyped
+    emitToUser(userId, 'notification', { type, payload });
+  }
 
   return review;
 }
@@ -58,7 +77,10 @@ export async function createReview(reviewerId: string, payload: {
 /**
  * List approved reviews for a photographer (public)
  */
-export async function listApprovedReviewsForPhotographer(photographerId: string, opts?: { page?: number; perPage?: number }) {
+export async function listApprovedReviewsForPhotographer(
+  photographerId: string,
+  opts?: { page?: number; perPage?: number }
+) {
   const page = Math.max(1, Number(opts?.page || 1));
   const perPage = Math.min(100, Number(opts?.perPage || 12));
   const skip = (page - 1) * perPage;
@@ -74,7 +96,7 @@ export async function listApprovedReviewsForPhotographer(photographerId: string,
     prisma.review.count({ where: { photographerId, status: ReviewStatus.APPROVED } }),
   ]);
 
-  return { items, meta: { total, page, perPage: perPage, pages: Math.ceil(total / perPage) } };
+  return { items, meta: { total, page, perPage, pages: Math.ceil(total / perPage) } };
 }
 
 /**
@@ -96,13 +118,13 @@ export async function listReviewsByUser(userId: string, opts?: { page?: number; 
     prisma.review.count({ where: { reviewerId: userId } }),
   ]);
 
-  return { items, meta: { total, page, perPage: perPage, pages: Math.ceil(total / perPage) } };
+  return { items, meta: { total, page, perPage, pages: Math.ceil(total / perPage) } };
 }
 
 /**
  * Admin: list all reviews (with filter by status optional)
  */
-export async function adminListReviews(opts?: { status?: ReviewStatus | undefined; page?: number; perPage?: number }) {
+export async function adminListReviews(opts?: { status?: ReviewStatus; page?: number; perPage?: number }) {
   const page = Math.max(1, Number(opts?.page || 1));
   const perPage = Math.min(200, Number(opts?.perPage || 50));
   const skip = (page - 1) * perPage;
@@ -126,33 +148,35 @@ export async function adminListReviews(opts?: { status?: ReviewStatus | undefine
 
 /**
  * Admin action: approve or reject review.
- * - when approve: update status => APPROVED, recalc photographer rating
- * - when reject: update status => REJECTED (do not count towards rating)
- * - returns updated review
  */
-export async function adminModerateReview(adminUserId: string, reviewId: string, action: 'approve' | 'reject', reason?: string) {
-  // load review
-  const review = await prisma.review.findUnique({ where: { id: reviewId } });
-  if (!review) throw new Error('Review not found');
+export async function adminModerateReview(
+  adminUserId: string,
+  reviewId: string,
+  action: 'approve' | 'reject',
+  reason?: string
+) {
+  let createdNotification: CreatedNotification | null = null;
 
-  // no-op if already in target state
-  const targetStatus = action === 'approve' ? ReviewStatus.APPROVED : ReviewStatus.REJECTED;
-
-  if (review.status === targetStatus) return review;
-
-  // transaction: update review status + create notification + recalc rating if approved
   const updated = await prisma.$transaction(async (tx) => {
+    const review = await tx.review.findUnique({ where: { id: reviewId } });
+    if (!review) throw new Error('Review not found');
+
+    const targetStatus = action === 'approve' ? ReviewStatus.APPROVED : ReviewStatus.REJECTED;
+    if (review.status === targetStatus) return review;
+
     const u = await tx.review.update({
       where: { id: reviewId },
       data: { status: targetStatus },
       include: { reviewer: { select: { id: true, name: true } } },
     });
 
-    // notification to photographer (and optionally reviewer)
-    const booking = await tx.booking.findUnique({ where: { id: u.bookingId }, include: { photographer: { select: { userId: true } } } });
+    const booking = await tx.booking.findUnique({
+      where: { id: u.bookingId },
+      include: { photographer: { select: { userId: true } } },
+    });
 
     if (booking?.photographer?.userId) {
-      await tx.notification.create({
+      const notif = await tx.notification.create({
         data: {
           userId: booking.photographer.userId,
           type: NotificationType.REVIEW_RECEIVED,
@@ -163,11 +187,15 @@ export async function adminModerateReview(adminUserId: string, reviewId: string,
           } as any,
         },
       });
+
+      createdNotification = {
+        userId: booking.photographer.userId,
+        type: notif.type,
+        payload: notif.payload,
+      };
     }
 
-    // if approved -> recalc rating
     if (action === 'approve') {
-      // aggregate approved reviews
       const agg = await tx.review.aggregate({
         _avg: { rating: true },
         _count: { rating: true },
@@ -179,8 +207,8 @@ export async function adminModerateReview(adminUserId: string, reviewId: string,
       await tx.photographer.update({
         where: { id: review.photographerId },
         data: {
-          ratingAvg: ratingCount > 0 ? Math.round((ratingAvg + Number.EPSILON) * 100) / 100 : 0, // round to 2 decimals
-          ratingCount: ratingCount,
+          ratingAvg: ratingCount > 0 ? Math.round((ratingAvg + Number.EPSILON) * 100) / 100 : 0,
+          ratingCount,
         },
       });
     }
@@ -188,11 +216,16 @@ export async function adminModerateReview(adminUserId: string, reviewId: string,
     return u;
   });
 
+  if (createdNotification) {
+    const { userId, type, payload } = createdNotification;
+    emitToUser(userId, 'notification', { type, payload });
+  }
+
   return updated;
 }
 
 /**
- * Helper: when a review is deleted or status changed elsewhere, you can call this to recalc rating.
+ * Helper: recalc rating
  */
 export async function recalcPhotographerRating(photographerId: string) {
   const agg = await prisma.review.aggregate({
