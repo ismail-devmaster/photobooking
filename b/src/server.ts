@@ -11,8 +11,8 @@ import galleryRoutes from './routes/gallery.routes';
 import path from 'path';
 import bookingRoutes from './routes/booking.routes';
 import favoritesRoutes from './routes/favorite.routes';
-
-
+import reviewRoutes from './routes/review.routes';
+import adminReviewRoutes from './routes/admin.review.routes';
 
 import './config/passport'; // initialize passport strategies
 import passport from 'passport';
@@ -35,9 +35,8 @@ app.use('/api/v1/gallery', galleryRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/favorites', favoritesRoutes);
-
-
-
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/admin/reviews', adminReviewRoutes);
 
 // global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

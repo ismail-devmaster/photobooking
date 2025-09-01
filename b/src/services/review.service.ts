@@ -1,0 +1,213 @@
+// src/services/review.service.ts
+import { prisma } from '../config/prisma';
+import { ReviewStatus, NotificationType } from '@prisma/client';
+
+/**
+ * Create a review for a completed booking.
+ * - ensures booking exists and belongs to the client
+ * - ensures booking.state === completed
+ * - creates Review (status: PENDING)
+ * - creates Notification for photographer (REVIEW_RECEIVED)
+ */
+export async function createReview(reviewerId: string, payload: {
+  bookingId: string;
+  rating: number;
+  text?: string | null;
+}) {
+  const { bookingId, rating, text } = payload;
+
+  // load booking
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { photographer: { select: { id: true, userId: true } } },
+  });
+  if (!booking) throw new Error('Booking not found');
+  if (booking.clientId !== reviewerId) throw new Error('Not allowed to review this booking');
+  // require booking completed
+  if (booking.state !== 'completed') throw new Error('Review allowed only after booking completed');
+
+  // create review (unique constraint bookingId prevents duplicates)
+  const review = await prisma.review.create({
+    data: {
+      bookingId,
+      photographerId: booking.photographerId,
+      reviewerId,
+      rating,
+      text: text ?? null,
+      status: ReviewStatus.PENDING, // moderation required
+    },
+  });
+
+  // notify photographer in-app
+  await prisma.notification.create({
+    data: {
+      userId: booking.photographer.userId,
+      type: NotificationType.REVIEW_RECEIVED,
+      payload: {
+        reviewId: review.id,
+        bookingId,
+        rating,
+        reviewerId,
+      } as any,
+    },
+  });
+
+  return review;
+}
+
+/**
+ * List approved reviews for a photographer (public)
+ */
+export async function listApprovedReviewsForPhotographer(photographerId: string, opts?: { page?: number; perPage?: number }) {
+  const page = Math.max(1, Number(opts?.page || 1));
+  const perPage = Math.min(100, Number(opts?.perPage || 12));
+  const skip = (page - 1) * perPage;
+
+  const [items, total] = await Promise.all([
+    prisma.review.findMany({
+      where: { photographerId, status: ReviewStatus.APPROVED },
+      include: { reviewer: { select: { id: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: perPage,
+    }),
+    prisma.review.count({ where: { photographerId, status: ReviewStatus.APPROVED } }),
+  ]);
+
+  return { items, meta: { total, page, perPage: perPage, pages: Math.ceil(total / perPage) } };
+}
+
+/**
+ * List reviews by reviewer (user)
+ */
+export async function listReviewsByUser(userId: string, opts?: { page?: number; perPage?: number }) {
+  const page = Math.max(1, Number(opts?.page || 1));
+  const perPage = Math.min(100, Number(opts?.perPage || 50));
+  const skip = (page - 1) * perPage;
+
+  const [items, total] = await Promise.all([
+    prisma.review.findMany({
+      where: { reviewerId: userId },
+      include: { photographer: { select: { id: true, userId: true } } },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: perPage,
+    }),
+    prisma.review.count({ where: { reviewerId: userId } }),
+  ]);
+
+  return { items, meta: { total, page, perPage: perPage, pages: Math.ceil(total / perPage) } };
+}
+
+/**
+ * Admin: list all reviews (with filter by status optional)
+ */
+export async function adminListReviews(opts?: { status?: ReviewStatus | undefined; page?: number; perPage?: number }) {
+  const page = Math.max(1, Number(opts?.page || 1));
+  const perPage = Math.min(200, Number(opts?.perPage || 50));
+  const skip = (page - 1) * perPage;
+
+  const where: any = {};
+  if (opts?.status) where.status = opts.status;
+
+  const [items, total] = await Promise.all([
+    prisma.review.findMany({
+      where,
+      include: { reviewer: { select: { id: true, name: true } }, booking: true },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: perPage,
+    }),
+    prisma.review.count({ where }),
+  ]);
+
+  return { items, meta: { total, page, perPage, pages: Math.ceil(total / perPage) } };
+}
+
+/**
+ * Admin action: approve or reject review.
+ * - when approve: update status => APPROVED, recalc photographer rating
+ * - when reject: update status => REJECTED (do not count towards rating)
+ * - returns updated review
+ */
+export async function adminModerateReview(adminUserId: string, reviewId: string, action: 'approve' | 'reject', reason?: string) {
+  // load review
+  const review = await prisma.review.findUnique({ where: { id: reviewId } });
+  if (!review) throw new Error('Review not found');
+
+  // no-op if already in target state
+  const targetStatus = action === 'approve' ? ReviewStatus.APPROVED : ReviewStatus.REJECTED;
+
+  if (review.status === targetStatus) return review;
+
+  // transaction: update review status + create notification + recalc rating if approved
+  const updated = await prisma.$transaction(async (tx) => {
+    const u = await tx.review.update({
+      where: { id: reviewId },
+      data: { status: targetStatus },
+      include: { reviewer: { select: { id: true, name: true } } },
+    });
+
+    // notification to photographer (and optionally reviewer)
+    const booking = await tx.booking.findUnique({ where: { id: u.bookingId }, include: { photographer: { select: { userId: true } } } });
+
+    if (booking?.photographer?.userId) {
+      await tx.notification.create({
+        data: {
+          userId: booking.photographer.userId,
+          type: NotificationType.REVIEW_RECEIVED,
+          payload: {
+            reviewId: u.id,
+            action,
+            reason: reason ?? null,
+          } as any,
+        },
+      });
+    }
+
+    // if approved -> recalc rating
+    if (action === 'approve') {
+      // aggregate approved reviews
+      const agg = await tx.review.aggregate({
+        _avg: { rating: true },
+        _count: { rating: true },
+        where: { photographerId: review.photographerId, status: ReviewStatus.APPROVED },
+      });
+      const ratingAvg = agg._avg.rating ?? 0;
+      const ratingCount = agg._count.rating ?? 0;
+
+      await tx.photographer.update({
+        where: { id: review.photographerId },
+        data: {
+          ratingAvg: ratingCount > 0 ? Math.round((ratingAvg + Number.EPSILON) * 100) / 100 : 0, // round to 2 decimals
+          ratingCount: ratingCount,
+        },
+      });
+    }
+
+    return u;
+  });
+
+  return updated;
+}
+
+/**
+ * Helper: when a review is deleted or status changed elsewhere, you can call this to recalc rating.
+ */
+export async function recalcPhotographerRating(photographerId: string) {
+  const agg = await prisma.review.aggregate({
+    _avg: { rating: true },
+    _count: { rating: true },
+    where: { photographerId, status: ReviewStatus.APPROVED },
+  });
+  const ratingAvg = agg._avg.rating ?? 0;
+  const ratingCount = agg._count.rating ?? 0;
+
+  return prisma.photographer.update({
+    where: { id: photographerId },
+    data: {
+      ratingAvg: ratingCount > 0 ? Math.round((ratingAvg + Number.EPSILON) * 100) / 100 : 0,
+      ratingCount,
+    },
+  });
+}
