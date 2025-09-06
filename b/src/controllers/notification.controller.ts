@@ -1,18 +1,16 @@
 // src/controllers/notification.controller.ts
 import { Request, Response } from 'express';
 import * as notificationService from '../services/notification.service';
-import { listNotificationsQuery, notificationIdParam } from '../validators/notification.schemas';
 
 export async function listMyNotifications(req: Request, res: Response) {
   try {
     const userId = (req as any).userId as string;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const q = listNotificationsQuery.parse(req.query);
-    const result = await notificationService.listNotificationsForUser(userId, q.page, q.perPage);
+    const page = Number(req.query.page || 1);
+    const perPage = Number(req.query.perPage || 20);
+    const result = await notificationService.listNotificationsForUser(userId, page, perPage);
     return res.json(result);
   } catch (err: any) {
-    console.error('listMyNotifications error:', err);
+    console.error(err);
     return res.status(500).json({ error: 'Could not fetch notifications' });
   }
 }
@@ -20,15 +18,23 @@ export async function listMyNotifications(req: Request, res: Response) {
 export async function markRead(req: Request, res: Response) {
   try {
     const userId = (req as any).userId as string;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const pid = notificationIdParam.parse(req.params);
-    const updated = await notificationService.markNotificationRead(userId, pid.id);
+    const id = req.params.id;
+    const updated = await notificationService.markNotificationRead(userId, id);
     return res.json(updated);
   } catch (err: any) {
-    console.error('markRead error:', err);
-    if (err.message.includes('not found')) return res.status(404).json({ error: err.message });
-    if (err.message.includes('Forbidden')) return res.status(403).json({ error: err.message });
-    return res.status(400).json({ error: err.message });
+    console.error(err);
+    return res.status(400).json({ error: err.message || 'Could not mark read' });
+  }
+}
+
+export async function markReadBulk(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId as string;
+    const ids = (req.body.ids as string[]) || [];
+    const result = await notificationService.markNotificationsReadBulk(userId, ids);
+    return res.json(result);
+  } catch (err: any) {
+    console.error(err);
+    return res.status(400).json({ error: err.message || 'Could not mark read' });
   }
 }
