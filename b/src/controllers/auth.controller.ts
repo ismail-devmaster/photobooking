@@ -109,6 +109,7 @@ export async function login(req: Request, res: Response) {
         error: 'Email not verified. Please check your inbox to verify your account.',
       });
     }
+    if (user.disabled) return res.status(403).json({ error: 'Account disabled' });
 
     const tokens = await authService.createSessionTokens(user.id);
 

@@ -20,6 +20,9 @@ import conversationRoutes from './routes/conversation.routes';
 import messageRoutes from './routes/message.routes';
 import notificationRoutes from './routes/notification.routes';
 import contractRoutes from './routes/contract.routes';
+import adminUserRoutes from './routes/admin.users.routes';
+
+
 
 
 import './config/passport'; // initialize passport strategies
@@ -50,6 +53,7 @@ app.use('/api/v1/conversations', conversationRoutes);
 app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/contracts', contractRoutes);
+app.use('/api/v1/admin', adminUserRoutes);
 
 // --- Global error handler ---
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
