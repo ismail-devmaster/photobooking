@@ -374,9 +374,24 @@ model Service {
   slug        String   @unique
   name        String
   description String?
+    categoryId  String?       
+      category    Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
   createdAt   DateTime @default(now())
 
   photographers Photographer[] // many-to-many implicit relation
+
+  @@index([slug])
+  @@index([name])
+}
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  services Service[]
 
   @@index([slug])
   @@index([name])
