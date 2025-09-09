@@ -96,6 +96,7 @@ model User {
   favorites          Favorite[]
   stateId            String? // nullable - user may not set state
   state              State?              @relation("UserState", fields: [stateId], references: [id])
+  createdCalendarEvents CalendarEvent[] @relation("CalendarEventCreatedBy")
 
   @@index([email])
   @@index([role])
@@ -168,6 +169,7 @@ model Photographer {
   // packages and gallery images
   packages      Package[]
   galleryImages GalleryImage[]
+  calendarEvents CalendarEvent[]
 
   @@index([verified, ratingAvg])
   @@index([priceBaseline])
@@ -205,7 +207,7 @@ model Booking {
   photographerId String
   startAt        DateTime
   endAt          DateTime
-  location       Json // {address, lat, lon}
+  location       Json? // {address, lat, lon}
   priceCents     Int
   state          BookingState @default(requested)
   createdAt      DateTime     @default(now())
@@ -355,6 +357,24 @@ model GalleryImage {
 
   @@index([photographerId])
 }
+
+model CalendarEvent {
+  id             String   @id @default(cuid())
+  photographerId String
+  photographer   Photographer @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  startAt        DateTime
+  endAt          DateTime
+  title          String?    // e.g., "Holiday", "Booked - Wedding", "Blocked"
+  type           String     @default("blocked") // "blocked"|"available"|"note" (mostly "blocked")
+  createdById    String?    // optional user who created the block (photographer)
+  createdBy      User?      @relation("CalendarEventCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([photographerId, startAt])
+  @@index([startAt, endAt])
+}
+
 
 model State {
   id        String   @id @default(cuid())

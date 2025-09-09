@@ -1,6 +1,7 @@
 // src/services/booking.service.ts
 import { prisma } from '../config/prisma';
 import { BookingState } from '@prisma/client';
+import * as calendarService from './calendar.service';
 
 /**
  * Create booking:
@@ -8,32 +9,51 @@ import { BookingState } from '@prisma/client';
  * - uses package.priceCents unless priceCents override provided
  * - creates booking + bookingStateHistory + notification in a transaction
  */
-export async function createBooking(clientId: string, payload: {
-  photographerId: string;
-  packageId?: string | null;
-  startAt: Date;
-  endAt: Date;
-  location?: { address: string; lat: number; lon: number } | null;
-  notes?: string | null;
-  priceCents?: number | null;
-}) {
+export async function createBooking(
+  clientId: string,
+  payload: {
+    photographerId: string;
+    packageId?: string | null;
+    startAt: Date;
+    endAt: Date;
+    location?: { address: string; lat: number; lon: number } | null;
+    notes?: string | null;
+    priceCents?: number | null;
+  },
+) {
   // fetch package & photographer
   const [photog, pkg] = await Promise.all([
     prisma.photographer.findUnique({ where: { id: payload.photographerId } }),
-    payload.packageId ? prisma.package.findUnique({ where: { id: payload.packageId } }) : Promise.resolve(null),
+    payload.packageId
+      ? prisma.package.findUnique({ where: { id: payload.packageId } })
+      : Promise.resolve(null),
   ]);
 
   if (!photog) throw new Error('Photographer not found');
-  if (pkg && pkg.photographerId !== photog.id) throw new Error('Package does not belong to photographer');
+  if (pkg && pkg.photographerId !== photog.id)
+    throw new Error('Package does not belong to photographer');
 
-  const price = typeof payload.priceCents === 'number' ? payload.priceCents : (pkg ? pkg.priceCents : 0);
+  // Check photographer availability before creating booking
+  const isAvailable = await calendarService.isPhotographerAvailable(
+    payload.photographerId,
+    payload.startAt,
+    payload.endAt,
+    { includePending: true }, // Include pending bookings to prevent double bookings
+  );
+
+  if (!isAvailable) {
+    throw new Error('Photographer is not available for the requested time slot');
+  }
+
+  const price =
+    typeof payload.priceCents === 'number' ? payload.priceCents : pkg ? pkg.priceCents : 0;
 
   const bookingData = {
     clientId,
     photographerId: photog.id,
     startAt: payload.startAt,
     endAt: payload.endAt,
-    location: payload.location ? payload.location as any : { address: photog.userId ? '' : '' }, // location required by schema — we pass provided or empty
+    location: payload.location ?? null, // ⬅️ نظيف وواضح
     priceCents: price,
     state: BookingState.requested,
   };
@@ -78,7 +98,10 @@ export async function createBooking(clientId: string, payload: {
   return result;
 }
 
-export async function getBookingsForClient(clientId: string, opts?: { page?: number; perPage?: number }) {
+export async function getBookingsForClient(
+  clientId: string,
+  opts?: { page?: number; perPage?: number },
+) {
   const page = Math.max(1, Number(opts?.page || 1));
   const perPage = Math.min(100, Number(opts?.perPage || 20));
   const skip = (page - 1) * perPage;
@@ -102,7 +125,10 @@ export async function getBookingsForClient(clientId: string, opts?: { page?: num
   return { items, meta: { total, page, perPage } };
 }
 
-export async function getBookingsForPhotographerUser(userId: string, opts?: { page?: number; perPage?: number }) {
+export async function getBookingsForPhotographerUser(
+  userId: string,
+  opts?: { page?: number; perPage?: number },
+) {
   // find photographer by userId
   const photographer = await prisma.photographer.findUnique({ where: { userId } });
   if (!photographer) throw new Error('Photographer profile not found');
