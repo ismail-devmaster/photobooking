@@ -1,0 +1,27 @@
+{
+    "email": {
+    "verify_subject": "Verify your email",
+    "verify_greeting": "Hi {{name}}",
+    "verify_text": "Please verify your email by clicking the link below:",
+    "verify_button": "Verify Email",
+    "verify_footer": "If you did not sign up, ignore this email."
+    },
+    "auth": {
+    "email_required": "Email and password required",
+    "email_in_use": "Email already in use",
+    "registration_success": "User created. Please check your email to verify your account.",
+    "invalid_credentials": "Invalid credentials",
+    "email_not_verified": "Email not verified. Please check your inbox to verify your account."
+    },
+    "notification": {
+    "booking_requested": "{{clientName}} requested a booking ({{bookingId}})",
+    "booking_confirmed": "Booking {{bookingId}} confirmed",
+    "booking_state_changed": "Booking {{bookingId}} changed: {{fromState}} → {{toState}}",
+    "review_received": "You received a new review ({{reviewId}})",
+    "message_received": "New message received"
+    },
+    "errors": {
+    "missing_token_or_uid": "Missing token or uid",
+    "verification_failed": "Verification failed"
+    }
+    }

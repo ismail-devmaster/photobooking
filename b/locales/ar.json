@@ -1,0 +1,27 @@
+{
+    "email": {
+    "verify_subject": "تأكيد البريد الإلكتروني",
+    "verify_greeting": "مرحباً {{name}}",
+    "verify_text": "يرجى تأكيد بريدك الإلكتروني بالنقر على الزر أدناه:",
+    "verify_button": "تأكيد البريد",
+    "verify_footer": "إذا لم تقم بالتسجيل، يمكنك تجاهل هذه الرسالة."
+    },
+    "auth": {
+    "email_required": "البريد الإلكتروني وكلمة المرور مطلوبان",
+    "email_in_use": "البريد الإلكتروني مستخدم بالفعل",
+    "registration_success": "تم إنشاء الحساب. يرجى التحقق من البريد الإلكتروني لتأكيد الحساب.",
+    "invalid_credentials": "بيانات الاعتماد غير صحيحة",
+    "email_not_verified": "البريد غير مؤكد. يرجى التحقق من صندوق الوارد."
+    },
+    "notification": {
+    "booking_requested": "{{clientName}} طلب حجز ({{bookingId}})",
+    "booking_confirmed": "تم تأكيد الحجز {{bookingId}}",
+    "booking_state_changed": "الحجز {{bookingId}} تغير: {{fromState}} → {{toState}}",
+    "review_received": "لديك تقييم جديد ({{reviewId}})",
+    "message_received": "وصلت رسالة جديدة"
+    },
+    "errors": {
+    "missing_token_or_uid": "الرمز أو معرف المستخدم مفقود",
+    "verification_failed": "فشل التحقق"
+    }
+    }
