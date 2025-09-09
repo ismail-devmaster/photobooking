@@ -22,7 +22,7 @@ import notificationRoutes from './routes/notification.routes';
 import contractRoutes from './routes/contract.routes';
 import adminUserRoutes from './routes/admin.users.routes';
 import adminCatalogRoutes from './routes/admin.catalog.routes';
-
+import adminStatsRoutes from './routes/admin.stats.routes';
 
 
 
@@ -56,6 +56,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/contracts', contractRoutes);
 app.use('/api/v1/admin', adminUserRoutes);
 app.use('/api/v1/admin', adminCatalogRoutes);
+app.use('/api/v1/admin', adminStatsRoutes);
 
 // --- Global error handler ---
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
