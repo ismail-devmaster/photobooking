@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import path from 'path';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -34,6 +35,12 @@ import passport from 'passport';
 const app = express();
 app.use(helmet());
 app.use(morgan('dev'));
+app.use(
+  cors({
+    origin: 'http://localhost:3000', // أو عنوان الواجهة الأمامية
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
