@@ -1,4 +1,6 @@
 // src/server.ts
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import morgan from 'morgan';
 import helmet from 'helmet';
@@ -24,9 +26,6 @@ import adminUserRoutes from './routes/admin.users.routes';
 import adminCatalogRoutes from './routes/admin.catalog.routes';
 import adminStatsRoutes from './routes/admin.stats.routes';
 import calendarRoutes from './routes/calendar.routes';
-
-
-
 
 import './config/passport'; // initialize passport strategies
 import passport from 'passport';
