@@ -1,14 +1,14 @@
 'use client';
 
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/Card';
+} from '@/components/ui/card';
 
 export default function StyleGuide() {
   return (
@@ -71,10 +71,7 @@ export default function StyleGuide() {
               <CardDescription>Input with validation error</CardDescription>
             </CardHeader>
             <CardContent>
-              <Input
-                placeholder="Enter text..."
-                error="This field is required"
-              />
+              <Input placeholder="Enter text..." />
             </CardContent>
           </Card>
         </div>
