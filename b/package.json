@@ -5,6 +5,7 @@
     "@types/pdfkit": "^0.17.2",
     "cookie-parser": "^1.4.7",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
@@ -58,7 +59,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "db:seed": "prisma db seed",
     "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings=0",
     "format": "prettier --write .",
