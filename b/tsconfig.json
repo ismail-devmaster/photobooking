@@ -12,7 +12,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "noImplicitAny": true,
-    "types": ["node"]
+    "types": ["node"],
+    "noEmitOnError": false
   },
   "include": ["src", "prisma", "routes"],
   "exclude": ["node_modules", "dist","src/__tests__"]
