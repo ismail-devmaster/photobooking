@@ -30,7 +30,7 @@ export default function LoginPage() {
       localStorage.setItem('accessToken', data.accessToken);
 
       // إعادة التوجيه
-      router.push('/dashboard'); // أو الصفحة المناسبة
+      router.push('/profile'); // أو الصفحة المناسبة
       router.refresh();
     } catch (err: any) {
       console.error('Login error:', err);
