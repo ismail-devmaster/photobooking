@@ -2,7 +2,7 @@
 import nodemailer, { Transporter } from 'nodemailer';
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'no-reply@local.test';
-const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:4000';
+const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 let transporter: Transporter | null = null;
 let usingTestAccount = false;
@@ -48,7 +48,9 @@ async function initTransporter(): Promise<Transporter> {
     },
   });
   usingTestAccount = true;
-  console.warn('⚠️ No SMTP config found. Using Ethereal test account — messages will not be delivered externally.');
+  console.warn(
+    '⚠️ No SMTP config found. Using Ethereal test account — messages will not be delivered externally.',
+  );
   return transporter;
 }
 
@@ -59,10 +61,15 @@ async function initTransporter(): Promise<Transporter> {
  * - token: plain verification token (included in link)
  * - userId: id of the user (uid param in link)
  */
-export async function sendVerificationEmail(to: string, name: string | null | undefined, token: string, userId: string) {
+export async function sendVerificationEmail(
+  to: string,
+  name: string | null | undefined,
+  token: string,
+  userId: string,
+) {
   const transport = await initTransporter();
 
-  const verifyUrl = `${APP_BASE_URL.replace(/\/$/, '')}/api/v1/auth/verify-email?token=${encodeURIComponent(
+  const verifyUrl = `${NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/auth/verify-email?token=${encodeURIComponent(
     token,
   )}&uid=${encodeURIComponent(userId)}`;
 
