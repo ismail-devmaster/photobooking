@@ -44,8 +44,8 @@ const config: Config = {
         sans: ['Inter', 'sans-serif'],
       },
     },
-  },
-  plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography')],
+  }/*,
+  plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography')],*/
 };
 
 export default config;
