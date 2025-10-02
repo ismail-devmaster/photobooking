@@ -73,3 +73,30 @@ export async function setUserDisabled(adminId: string, userId: string, disabled:
 
   return updated;
 }
+
+/**
+ * Delete a user permanently
+ */
+export async function deleteUser(adminId: string, userId: string) {
+  // Prevent admin from deleting themselves
+  if (adminId === userId) {
+    throw new Error('Admins cannot delete their own account');
+  }
+
+  // Check if user exists
+  const user = await prisma.user.findUnique({ 
+    where: { id: userId },
+    select: { id: true, email: true, role: true }
+  });
+  
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Delete the user - cascading deletes will handle related records
+  await prisma.user.delete({
+    where: { id: userId }
+  });
+
+  return { deletedUser: user };
+}

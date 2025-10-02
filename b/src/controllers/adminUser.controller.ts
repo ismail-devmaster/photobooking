@@ -31,3 +31,16 @@ export async function updateUserStatus(req: Request, res: Response) {
     return res.status(400).json({ error: err.message || 'Could not update user status' });
   }
 }
+
+export async function deleteUser(req: Request, res: Response) {
+  try {
+    const adminId = (req as any).userId as string;
+    const userId = req.params.id;
+
+    await adminUserService.deleteUser(adminId, userId);
+    return res.json({ success: true, message: 'User deleted successfully' });
+  } catch (err: any) {
+    console.error('deleteUser error', err);
+    return res.status(400).json({ error: err.message || 'Could not delete user' });
+  }
+}

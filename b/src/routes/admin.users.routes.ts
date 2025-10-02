@@ -13,4 +13,7 @@ router.get('/users', authenticateAccessToken, isAdmin, adminCtrl.listUsers);
 // body: { disabled: boolean }
 router.patch('/users/:id/status', authenticateAccessToken, isAdmin, adminCtrl.updateUserStatus);
 
+// DELETE /admin/users/:id
+router.delete('/users/:id', authenticateAccessToken, isAdmin, adminCtrl.deleteUser);
+
 export default router;
