@@ -37,7 +37,8 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(
   cors({
-    origin: 'http://localhost:3000', // أو عنوان الواجهة الأمامية
+    // origin: 'http://localhost:3000', // أو عنوان الواجهة الأمامية
+    origin: true,
     credentials: true,
   }),
 );
