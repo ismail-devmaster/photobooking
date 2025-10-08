@@ -9,6 +9,12 @@ const router = Router();
 
 // Photographer manages own calendar blocks
 router.post('/', authenticateAccessToken, requireRole(Role.PHOTOGRAPHER), calendarCtrl.createBlock);
+router.put(
+  '/:id',
+  authenticateAccessToken,
+  requireRole(Role.PHOTOGRAPHER),
+  calendarCtrl.updateBlock,
+);
 router.delete(
   '/:id',
   authenticateAccessToken,

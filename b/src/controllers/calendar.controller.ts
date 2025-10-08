@@ -30,6 +30,31 @@ export async function createBlock(req: Request, res: Response) {
   }
 }
 
+export async function updateBlock(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId as string;
+    const photographer = await require('../config/prisma').prisma.photographer.findUnique({
+      where: { userId },
+    });
+    if (!photographer) return res.status(400).json({ error: 'Photographer profile not found' });
+
+    const { id } = req.params;
+    const { startAt, endAt, title, type } = req.body;
+    
+    const rec = await calendarService.updateCalendarEvent(id, photographer.id, {
+      startAt,
+      endAt,
+      title,
+      type,
+    });
+
+    return res.json(rec);
+  } catch (err: any) {
+    console.error('updateBlock error', err);
+    return res.status(400).json({ error: err.message || 'Could not update calendar event' });
+  }
+}
+
 export async function deleteBlock(req: Request, res: Response) {
   try {
     const userId = (req as any).userId as string;

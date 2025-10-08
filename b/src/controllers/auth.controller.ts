@@ -195,6 +195,7 @@ export async function me(req: Request, res: Response) {
     },
   });
   
+  
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   // 🚨 تأكد أن البريد مفعّل

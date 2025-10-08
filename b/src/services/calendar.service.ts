@@ -34,6 +34,59 @@ export async function createCalendarEvent(photographerId: string, payload: {
 }
 
 /**
+ * Update a calendar event (photographer only).
+ */
+export async function updateCalendarEvent(eventId: string, photographerId: string, payload: {
+  startAt?: string | Date;
+  endAt?: string | Date;
+  title?: string | null;
+  type?: 'blocked' | 'available' | 'note';
+}) {
+  // verify owner
+  const rec = await prisma.calendarEvent.findUnique({ where: { id: eventId } });
+  if (!rec) throw new Error('Event not found');
+  if (rec.photographerId !== photographerId) throw new Error('Not authorized');
+
+  const updateData: any = {};
+  
+  if (payload.startAt !== undefined) {
+    updateData.startAt = new Date(payload.startAt);
+  }
+  
+  if (payload.endAt !== undefined) {
+    updateData.endAt = new Date(payload.endAt);
+  }
+  
+  if (payload.title !== undefined) {
+    updateData.title = payload.title;
+  }
+  
+  if (payload.type !== undefined) {
+    updateData.type = payload.type;
+  }
+
+  // Validate dates if both are provided
+  if (updateData.startAt && updateData.endAt) {
+    if (updateData.endAt <= updateData.startAt) {
+      throw new Error('endAt must be after startAt');
+    }
+  } else if (updateData.startAt && rec.endAt) {
+    if (rec.endAt <= updateData.startAt) {
+      throw new Error('endAt must be after startAt');
+    }
+  } else if (updateData.endAt && rec.startAt) {
+    if (updateData.endAt <= rec.startAt) {
+      throw new Error('endAt must be after startAt');
+    }
+  }
+
+  return prisma.calendarEvent.update({
+    where: { id: eventId },
+    data: updateData,
+  });
+}
+
+/**
  * Delete a calendar event (photographer only).
  */
 export async function deleteCalendarEvent(eventId: string, photographerId: string) {
