@@ -38,3 +38,25 @@ export async function markReadBulk(req: Request, res: Response) {
     return res.status(400).json({ error: err.message || 'Could not mark read' });
   }
 }
+
+export async function markAllRead(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId as string;
+    const result = await notificationService.markAllNotificationsRead(userId);
+    return res.json(result);
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: 'Could not mark all notifications as read' });
+  }
+}
+
+export async function deleteAllRead(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId as string;
+    const result = await notificationService.deleteAllReadNotifications(userId);
+    return res.json(result);
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: 'Could not delete read notifications' });
+  }
+}

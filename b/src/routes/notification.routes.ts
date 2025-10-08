@@ -8,5 +8,7 @@ const router = Router();
 router.get('/me', authenticateAccessToken, notifCtrl.listMyNotifications);
 router.patch('/:id/read', authenticateAccessToken, notifCtrl.markRead);
 router.post('/read-bulk', authenticateAccessToken, notifCtrl.markReadBulk);
+router.patch('/read-all', authenticateAccessToken, notifCtrl.markAllRead);
+router.delete('/read', authenticateAccessToken, notifCtrl.deleteAllRead);
 
 export default router;

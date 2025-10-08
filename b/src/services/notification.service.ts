@@ -105,3 +105,35 @@ export async function markNotificationsReadBulk(userId: string, ids: string[]) {
 
   return { count: result.count, unreadCount: unread };
 }
+
+/**
+ * Mark all notifications as read for a user
+ */
+export async function markAllNotificationsRead(userId: string) {
+  const result = await prisma.notification.updateMany({
+    where: { userId, readAt: null },
+    data: { readAt: new Date() },
+  });
+
+  try {
+    emitToUser(userId, 'notification:allRead', { unreadCount: 0 });
+  } catch (err) {}
+
+  return { count: result.count, unreadCount: 0 };
+}
+
+/**
+ * Delete all read notifications for a user
+ */
+export async function deleteAllReadNotifications(userId: string) {
+  const result = await prisma.notification.deleteMany({
+    where: { userId, readAt: { not: null } },
+  });
+
+  const unread = await prisma.notification.count({ where: { userId, readAt: null } });
+  try {
+    emitToUser(userId, 'notification:deletedRead', { unreadCount: unread });
+  } catch (err) {}
+
+  return { count: result.count, unreadCount: unread };
+}
