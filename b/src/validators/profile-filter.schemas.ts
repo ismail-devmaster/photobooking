@@ -8,6 +8,7 @@ export const photographerListQuery = z.object({
   q: z.string().max(200).optional(),
   tags: z.string().optional(), // comma separated
   sort: z.enum(['rating_desc','price_asc','price_desc','newest']).optional(),
-  page: z.preprocess((v) => Number(v), z.number().int().positive().default(1)),
-  perPage: z.preprocess((v) => Number(v), z.number().int().positive().default(12)),
+  // Ensure undefined/empty strings use defaults instead of NaN failing validation
+  page: z.preprocess((v) => (v === undefined || v === '' ? undefined : Number(v)), z.number().int().positive().default(1)),
+  perPage: z.preprocess((v) => (v === undefined || v === '' ? undefined : Number(v)), z.number().int().positive().default(12)),
 });

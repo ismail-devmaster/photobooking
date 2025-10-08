@@ -7,6 +7,7 @@ const router = Router();
 
 // Public routes - no authentication required
 router.get('/', photographerCtrl.listPhotographers);
+router.get('/state/:stateId', photographerCtrl.listPhotographersByState);
 router.get('/:id', photographerCtrl.getPhotographer);
 
 // Protected routes - require authentication

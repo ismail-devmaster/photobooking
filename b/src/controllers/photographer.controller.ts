@@ -50,6 +50,51 @@ export async function listPhotographers(req: Request, res: Response) {
 }
 
 /**
+ * Get photographers filtered by stateId (path param) with optional query filters
+ */
+export async function listPhotographersByState(req: Request, res: Response) {
+  try {
+    // Merge path param into query for validation
+    const input = { ...req.query, stateId: req.params.stateId } as Record<string, any>;
+    const parsed = photographerListQuery.safeParse(input);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid query', issues: parsed.error.issues });
+    }
+
+    const q = parsed.data;
+
+    const authHeader = String(req.headers.authorization || '');
+    let currentUserId: string | undefined = undefined;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      const payload = verifyAccessToken(token);
+      if (payload && payload.sub) currentUserId = payload.sub;
+    }
+
+    let tagsArr: string[] | undefined = undefined;
+    if (q.tags) tagsArr = q.tags.split(',').map((s) => s.trim()).filter(Boolean);
+
+    const result = await photographerService.listPhotographers({
+      stateId: q.stateId,
+      serviceId: q.serviceId,
+      minPrice: q.minPrice,
+      maxPrice: q.maxPrice,
+      q: q.q,
+      tags: tagsArr,
+      sort: q.sort,
+      page: q.page,
+      perPage: q.perPage,
+      currentUserId,
+    });
+
+    return res.json(result);
+  } catch (err: any) {
+    console.error('listPhotographersByState error:', err);
+    return res.status(500).json({ error: 'Could not list photographers by state' });
+  }
+}
+
+/**
  * Get a single photographer by ID
  */
 export async function getPhotographer(req: Request, res: Response) {

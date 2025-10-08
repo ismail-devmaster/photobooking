@@ -28,6 +28,7 @@ import adminUserRoutes from './routes/admin.users.routes';
 import adminCatalogRoutes from './routes/admin.catalog.routes';
 import adminStatsRoutes from './routes/admin.stats.routes';
 import calendarRoutes from './routes/calendar.routes';
+import statesRoutes from './routes/states.routes';
 
 import './config/passport'; // initialize passport strategies
 import passport from 'passport';
@@ -69,6 +70,7 @@ app.use('/api/v1/admin', adminUserRoutes);
 app.use('/api/v1/admin', adminCatalogRoutes);
 app.use('/api/v1/admin', adminStatsRoutes);
 app.use('/api/v1/calendar', calendarRoutes);
+app.use('/api/v1/states', statesRoutes);
 
 // --- Global error handler ---
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
