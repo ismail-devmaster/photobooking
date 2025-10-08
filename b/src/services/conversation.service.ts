@@ -139,6 +139,30 @@ export async function getMessages(conversationId: string, page = 1, perPage = 50
 }
 
 /**
+ * Get conversation by ID and verify user is a participant.
+ */
+export async function getConversationById(conversationId: string, userId: string) {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    include: {
+      participantA: { select: { id: true, name: true } },
+      participantB: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!conversation) {
+    throw new Error('Conversation not found');
+  }
+
+  // Check if user is a participant
+  if (conversation.participantAId !== userId && conversation.participantBId !== userId) {
+    throw new Error('Access denied - not a participant');
+  }
+
+  return conversation;
+}
+
+/**
  * Mark messages as read in a conversation for a given user (mark messages sent by others).
  */
 export async function markConversationRead(conversationId: string, userId: string) {

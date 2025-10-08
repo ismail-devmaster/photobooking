@@ -40,23 +40,33 @@ export async function listConversations(req: Request, res: Response) {
 
 export async function getMessages(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId; // من الـ auth middleware
-    const otherUserId = req.params.id;  // من /conversations/:id/messages
+    const userId = (req as any).userId; // from auth middleware
+    const conversationId = req.params.id; // from /conversations/:id/messages
 
-    const conversation = await conversationService.findOrCreateConversation(userId, otherUserId);
+    // Validate conversation ID parameter
+    const parsed = conversationIdParam.safeParse({ id: conversationId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid conversation ID' });
+    }
 
-    // جيب الرسائل
-    const { page = 1, perPage = 50 } = req.query;
+    // Get conversation and verify user is a participant
+    const conversation = await conversationService.getConversationById(conversationId, userId);
+
+    // Get messages with pagination
+    const q = listMessagesQuery.parse(req.query);
     const messages = await conversationService.getMessages(
-      conversation.id,
-      Number(page),
-      Number(perPage)
+      conversationId,
+      q.page,
+      q.perPage
     );
 
     return res.json({ conversation, messages });
   } catch (err: any) {
-    if (err.message.includes('participants do not exist')) {
-      return res.status(400).json({ error: 'Invalid conversation participants' });
+    if (err.message === 'Conversation not found') {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    if (err.message === 'Access denied - not a participant') {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
     console.error('getMessages error:', err);
