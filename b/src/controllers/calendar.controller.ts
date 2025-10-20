@@ -5,7 +5,7 @@ import { Role } from '@prisma/client';
 
 export async function createBlock(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     // assume photographer profile exists - you can fetch photographer by userId
     const photographer = await require('../config/prisma').prisma.photographer.findUnique({
       where: { userId },
@@ -32,7 +32,7 @@ export async function createBlock(req: Request, res: Response) {
 
 export async function updateBlock(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const photographer = await require('../config/prisma').prisma.photographer.findUnique({
       where: { userId },
     });
@@ -57,7 +57,7 @@ export async function updateBlock(req: Request, res: Response) {
 
 export async function deleteBlock(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const photographer = await require('../config/prisma').prisma.photographer.findUnique({
       where: { userId },
     });

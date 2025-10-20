@@ -36,6 +36,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.listMyNotifications = listMyNotifications;
 exports.markRead = markRead;
 exports.markReadBulk = markReadBulk;
+exports.markAllRead = markAllRead;
+exports.deleteAllRead = deleteAllRead;
 const notificationService = __importStar(require("../services/notification.service"));
 async function listMyNotifications(req, res) {
     try {
@@ -72,5 +74,27 @@ async function markReadBulk(req, res) {
     catch (err) {
         console.error(err);
         return res.status(400).json({ error: err.message || 'Could not mark read' });
+    }
+}
+async function markAllRead(req, res) {
+    try {
+        const userId = req.userId;
+        const result = await notificationService.markAllNotificationsRead(userId);
+        return res.json(result);
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Could not mark all notifications as read' });
+    }
+}
+async function deleteAllRead(req, res) {
+    try {
+        const userId = req.userId;
+        const result = await notificationService.deleteAllReadNotifications(userId);
+        return res.json(result);
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Could not delete read notifications' });
     }
 }

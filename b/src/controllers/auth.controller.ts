@@ -180,7 +180,7 @@ export async function logout(req: Request, res: Response) {
 // Example protected endpoint to return current user
 export async function me(req: Request, res: Response) {
   // the auth middleware will attach req.user with id
-  const userId = (req as any).userId;
+  const userId = req.userId;
   if (!userId) return res.status(401).json({ error: 'Unauthorized' });
   
   const user = await prisma.user.findUnique({ 

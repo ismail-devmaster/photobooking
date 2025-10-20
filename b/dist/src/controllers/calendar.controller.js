@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createBlock = createBlock;
+exports.updateBlock = updateBlock;
 exports.deleteBlock = deleteBlock;
 exports.getPhotographerCalendar = getPhotographerCalendar;
 exports.checkAvailability = checkAvailability;
@@ -62,6 +63,29 @@ async function createBlock(req, res) {
     catch (err) {
         console.error('createBlock error', err);
         return res.status(400).json({ error: err.message || 'Could not create calendar event' });
+    }
+}
+async function updateBlock(req, res) {
+    try {
+        const userId = req.userId;
+        const photographer = await require('../config/prisma').prisma.photographer.findUnique({
+            where: { userId },
+        });
+        if (!photographer)
+            return res.status(400).json({ error: 'Photographer profile not found' });
+        const { id } = req.params;
+        const { startAt, endAt, title, type } = req.body;
+        const rec = await calendarService.updateCalendarEvent(id, photographer.id, {
+            startAt,
+            endAt,
+            title,
+            type,
+        });
+        return res.json(rec);
+    }
+    catch (err) {
+        console.error('updateBlock error', err);
+        return res.status(400).json({ error: err.message || 'Could not update calendar event' });
     }
 }
 async function deleteBlock(req, res) {

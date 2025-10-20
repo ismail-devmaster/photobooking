@@ -39,6 +39,7 @@ exports.getMessages = getMessages;
 exports.markRead = markRead;
 const convService = __importStar(require("../services/conversation.service"));
 const conversation_schemas_1 = require("../validators/conversation.schemas");
+const message_schemas_1 = require("../validators/message.schemas");
 const conversationService = __importStar(require("../services/conversation.service"));
 async function createConversation(req, res) {
     try {
@@ -75,17 +76,26 @@ async function listConversations(req, res) {
 }
 async function getMessages(req, res) {
     try {
-        const userId = req.userId; // من الـ auth middleware
-        const otherUserId = req.params.id; // من /conversations/:id/messages
-        const conversation = await conversationService.findOrCreateConversation(userId, otherUserId);
-        // جيب الرسائل
-        const { page = 1, perPage = 50 } = req.query;
-        const messages = await conversationService.getMessages(conversation.id, Number(page), Number(perPage));
+        const userId = req.userId; // from auth middleware
+        const conversationId = req.params.id; // from /conversations/:id/messages
+        // Validate conversation ID parameter
+        const parsed = conversation_schemas_1.conversationIdParam.safeParse({ id: conversationId });
+        if (!parsed.success) {
+            return res.status(400).json({ error: 'Invalid conversation ID' });
+        }
+        // Get conversation and verify user is a participant
+        const conversation = await conversationService.getConversationById(conversationId, userId);
+        // Get messages with pagination
+        const q = message_schemas_1.listMessagesQuery.parse(req.query);
+        const messages = await conversationService.getMessages(conversationId, q.page, q.perPage);
         return res.json({ conversation, messages });
     }
     catch (err) {
-        if (err.message.includes('participants do not exist')) {
-            return res.status(400).json({ error: 'Invalid conversation participants' });
+        if (err.message === 'Conversation not found') {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+        if (err.message === 'Access denied - not a participant') {
+            return res.status(403).json({ error: 'Access denied' });
         }
         console.error('getMessages error:', err);
         return res.status(500).json({ error: 'Something went wrong' });

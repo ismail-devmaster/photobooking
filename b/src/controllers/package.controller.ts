@@ -5,7 +5,7 @@ import { createPackageSchema, updatePackageSchema } from '../validators/package.
 
 export async function createPackage(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     // photographerId must be retrieved from Photographer table by userId
     const photographer = await (require('../config/prisma').prisma).photographer.findUnique({ where: { userId } });
     if (!photographer) return res.status(400).json({ error: 'Photographer profile not found' });
@@ -23,7 +23,7 @@ export async function createPackage(req: Request, res: Response) {
 
 export async function updatePackage(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const photographer = await (require('../config/prisma').prisma).photographer.findUnique({ where: { userId } });
     if (!photographer) return res.status(400).json({ error: 'Photographer profile not found' });
 
@@ -43,7 +43,7 @@ export async function updatePackage(req: Request, res: Response) {
 
 export async function deletePackage(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const photographer = await (require('../config/prisma').prisma).photographer.findUnique({ where: { userId } });
     if (!photographer) return res.status(400).json({ error: 'Photographer profile not found' });
 

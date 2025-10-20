@@ -33,25 +33,15 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-// src/routes/conversation.routes.ts
+// src/routes/photographer.routes.ts
 const express_1 = require("express");
-const convCtrl = __importStar(require("../controllers/conversation.controller"));
-const msgCtrl = __importStar(require("../controllers/message.controller"));
+const photographerCtrl = __importStar(require("../controllers/photographer.controller"));
 const auth_middleware_1 = require("../middlewares/auth.middleware");
-const multer_1 = require("../config/multer"); // multer config
 const router = (0, express_1.Router)();
-// create conversation (or find existing)
-router.post('/', auth_middleware_1.authenticateAccessToken, convCtrl.createConversation);
-// list my conversations
-router.get('/', auth_middleware_1.authenticateAccessToken, convCtrl.listConversations);
-// get messages in a conversation (where :id is conversationId)
-router.get('/:id/messages', auth_middleware_1.authenticateAccessToken, convCtrl.getMessages);
-// send message in conversation (where :id is conversationId, with optional attachments)
-router.post('/:id/messages', auth_middleware_1.authenticateAccessToken, multer_1.upload.array('attachments', 5), async (req, res, next) => {
-    // inject conversationId into body and forward to sendMessage handler
-    req.body.conversationId = req.params.id;
-    return msgCtrl.sendMessage(req, res);
-});
-// mark conversation read (where :id is conversationId)
-router.patch('/:id/read', auth_middleware_1.authenticateAccessToken, convCtrl.markRead);
+// Public routes - no authentication required
+router.get('/', photographerCtrl.listPhotographers);
+router.get('/state/:stateId', photographerCtrl.listPhotographersByState);
+router.get('/:id', photographerCtrl.getPhotographer);
+// Protected routes - require authentication
+router.get('/:id/stats', auth_middleware_1.authenticateAccessToken, photographerCtrl.getPhotographerStats);
 exports.default = router;

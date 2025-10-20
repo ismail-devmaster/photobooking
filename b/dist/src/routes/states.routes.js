@@ -33,25 +33,11 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-// src/routes/conversation.routes.ts
+// src/routes/states.routes.ts
 const express_1 = require("express");
-const convCtrl = __importStar(require("../controllers/conversation.controller"));
-const msgCtrl = __importStar(require("../controllers/message.controller"));
-const auth_middleware_1 = require("../middlewares/auth.middleware");
-const multer_1 = require("../config/multer"); // multer config
+const stateCtrl = __importStar(require("../controllers/state.controller"));
 const router = (0, express_1.Router)();
-// create conversation (or find existing)
-router.post('/', auth_middleware_1.authenticateAccessToken, convCtrl.createConversation);
-// list my conversations
-router.get('/', auth_middleware_1.authenticateAccessToken, convCtrl.listConversations);
-// get messages in a conversation (where :id is conversationId)
-router.get('/:id/messages', auth_middleware_1.authenticateAccessToken, convCtrl.getMessages);
-// send message in conversation (where :id is conversationId, with optional attachments)
-router.post('/:id/messages', auth_middleware_1.authenticateAccessToken, multer_1.upload.array('attachments', 5), async (req, res, next) => {
-    // inject conversationId into body and forward to sendMessage handler
-    req.body.conversationId = req.params.id;
-    return msgCtrl.sendMessage(req, res);
-});
-// mark conversation read (where :id is conversationId)
-router.patch('/:id/read', auth_middleware_1.authenticateAccessToken, convCtrl.markRead);
+// Public endpoints
+router.get('/', stateCtrl.listStates); // paginated + search
+router.get('/all', stateCtrl.listAllStates); // full list (id, name, code)
 exports.default = router;

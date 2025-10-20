@@ -4,6 +4,8 @@ exports.createNotification = createNotification;
 exports.listNotificationsForUser = listNotificationsForUser;
 exports.markNotificationRead = markNotificationRead;
 exports.markNotificationsReadBulk = markNotificationsReadBulk;
+exports.markAllNotificationsRead = markAllNotificationsRead;
+exports.deleteAllReadNotifications = deleteAllReadNotifications;
 // src/services/notification.service.ts
 const prisma_1 = require("../config/prisma");
 const socket_1 = require("../lib/socket");
@@ -97,6 +99,34 @@ async function markNotificationsReadBulk(userId, ids) {
     const unread = await prisma_1.prisma.notification.count({ where: { userId, readAt: null } });
     try {
         (0, socket_1.emitToUser)(userId, 'notification:bulkRead', { unreadCount: unread });
+    }
+    catch (err) { }
+    return { count: result.count, unreadCount: unread };
+}
+/**
+ * Mark all notifications as read for a user
+ */
+async function markAllNotificationsRead(userId) {
+    const result = await prisma_1.prisma.notification.updateMany({
+        where: { userId, readAt: null },
+        data: { readAt: new Date() },
+    });
+    try {
+        (0, socket_1.emitToUser)(userId, 'notification:allRead', { unreadCount: 0 });
+    }
+    catch (err) { }
+    return { count: result.count, unreadCount: 0 };
+}
+/**
+ * Delete all read notifications for a user
+ */
+async function deleteAllReadNotifications(userId) {
+    const result = await prisma_1.prisma.notification.deleteMany({
+        where: { userId, readAt: { not: null } },
+    });
+    const unread = await prisma_1.prisma.notification.count({ where: { userId, readAt: null } });
+    try {
+        (0, socket_1.emitToUser)(userId, 'notification:deletedRead', { unreadCount: unread });
     }
     catch (err) { }
     return { count: result.count, unreadCount: unread };

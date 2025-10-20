@@ -4,7 +4,7 @@ import * as notificationService from '../services/notification.service';
 
 export async function listMyNotifications(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const page = Number(req.query.page || 1);
     const perPage = Number(req.query.perPage || 20);
     const result = await notificationService.listNotificationsForUser(userId, page, perPage);
@@ -17,7 +17,7 @@ export async function listMyNotifications(req: Request, res: Response) {
 
 export async function markRead(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const id = req.params.id;
     const updated = await notificationService.markNotificationRead(userId, id);
     return res.json(updated);
@@ -29,7 +29,7 @@ export async function markRead(req: Request, res: Response) {
 
 export async function markReadBulk(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const ids = (req.body.ids as string[]) || [];
     const result = await notificationService.markNotificationsReadBulk(userId, ids);
     return res.json(result);
@@ -41,7 +41,7 @@ export async function markReadBulk(req: Request, res: Response) {
 
 export async function markAllRead(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const result = await notificationService.markAllNotificationsRead(userId);
     return res.json(result);
   } catch (err: any) {
@@ -52,7 +52,7 @@ export async function markAllRead(req: Request, res: Response) {
 
 export async function deleteAllRead(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const result = await notificationService.deleteAllReadNotifications(userId);
     return res.json(result);
   } catch (err: any) {

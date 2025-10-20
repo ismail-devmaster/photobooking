@@ -7,7 +7,7 @@ import { BookingState } from '@prisma/client';
 
 export async function createBooking(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const parsed = createBookingSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: 'Validation failed', issues: parsed.error.issues });
@@ -43,7 +43,7 @@ export async function createBooking(req: Request, res: Response) {
 
 export async function listMyBookings(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const page = Number(req.query.page || '1');
     const perPage = Number(req.query.perPage || '20');
 
@@ -57,7 +57,7 @@ export async function listMyBookings(req: Request, res: Response) {
 
 export async function listReceivedBookings(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const page = Number(req.query.page || '1');
     const perPage = Number(req.query.perPage || '20');
 
@@ -76,7 +76,7 @@ export async function getBookingById(req: Request, res: Response) {
     const parsed = bookingIdParam.safeParse(req.params);
     if (!parsed.success) return res.status(400).json({ error: 'Invalid booking id' });
 
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const booking = await bookingService.getBookingByIdForUser(parsed.data.id, userId);
     if (!booking) return res.status(404).json({ error: 'Booking not found or access denied' });
     return res.json(booking);

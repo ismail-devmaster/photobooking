@@ -10,7 +10,7 @@ const APP_BASE_URL = process.env.APP_BASE_URL?.replace(/\/$/, '') || 'http://loc
 
 export async function uploadImage(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const photographer = await prisma.photographer.findUnique({
       where: { userId },
     });
@@ -60,7 +60,7 @@ export async function uploadImage(req: Request, res: Response) {
 
 export async function deleteImage(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const photographer = await prisma.photographer.findUnique({
       where: { userId },
     });

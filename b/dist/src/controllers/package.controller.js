@@ -37,7 +37,9 @@ exports.createPackage = createPackage;
 exports.updatePackage = updatePackage;
 exports.deletePackage = deletePackage;
 exports.getPackagesForPhotographer = getPackagesForPhotographer;
+exports.getAllPackages = getAllPackages;
 const pkgService = __importStar(require("../services/package.service"));
+const package_service_1 = require("../services/package.service");
 const package_schemas_1 = require("../validators/package.schemas");
 async function createPackage(req, res) {
     try {
@@ -104,6 +106,18 @@ async function getPackagesForPhotographer(req, res) {
     }
     catch (err) {
         console.error(err);
+        return res.status(500).json({ error: 'Could not list packages' });
+    }
+}
+async function getAllPackages(req, res) {
+    try {
+        const page = req.query.page ? Number(req.query.page) : undefined;
+        const perPage = req.query.perPage ? Number(req.query.perPage) : undefined;
+        const result = await (0, package_service_1.listAllPackages)({ page, perPage });
+        return res.json(result);
+    }
+    catch (err) {
+        console.error('getAllPackages error', err);
         return res.status(500).json({ error: 'Could not list packages' });
     }
 }

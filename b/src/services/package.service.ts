@@ -1,6 +1,7 @@
 import { prisma } from '../config/prisma';
+import { CreatePackageData, UpdatePackageData } from '../types/package';
 
-export async function createPackage(photographerId: string, data: { title: string; description?: string; priceCents: number }) {
+export async function createPackage(photographerId: string, data: CreatePackageData) {
   return prisma.package.create({
     data: {
       photographerId,
@@ -11,7 +12,7 @@ export async function createPackage(photographerId: string, data: { title: strin
   });
 }
 
-export async function updatePackage(packageId: string, photographerId: string, data: any) {
+export async function updatePackage(packageId: string, photographerId: string, data: UpdatePackageData) {
   // ensure ownership
   const p = await prisma.package.findUnique({ where: { id: packageId } });
   if (!p) throw new Error('Package not found');

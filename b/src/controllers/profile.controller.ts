@@ -6,7 +6,7 @@ import { verifyAccessToken } from '../utils/jwt';
 
 export async function getMyProfile(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const profile = await profileService.getUserProfile(userId);
@@ -19,7 +19,7 @@ export async function getMyProfile(req: Request, res: Response) {
 
 export async function updateMyProfile(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const payload = req.body;

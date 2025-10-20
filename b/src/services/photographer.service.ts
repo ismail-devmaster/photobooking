@@ -31,7 +31,7 @@ export async function listPhotographers(opts: PhotographerListOpts & { currentUs
     currentUserId,
   } = opts;
 
-  const where: any = { verified: true };
+  const where: { verified: boolean; [key: string]: any } = { verified: true };
 
   if (stateId) where.stateId = stateId;
   if (serviceId) where.services = { some: { id: serviceId } };
@@ -60,7 +60,7 @@ export async function listPhotographers(opts: PhotographerListOpts & { currentUs
   const take = Math.min(100, Number(perPage) || 12);
 
   // sort mapping
-  const orderBy: any = [];
+  const orderBy: { [key: string]: 'asc' | 'desc' }[] = [];
   if (sort === 'rating_desc') orderBy.push({ ratingAvg: 'desc' });
   else if (sort === 'price_asc') orderBy.push({ priceBaseline: 'asc' });
   else if (sort === 'price_desc') orderBy.push({ priceBaseline: 'desc' });

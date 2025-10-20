@@ -19,7 +19,7 @@ export async function listUsers(req: Request, res: Response) {
 
 export async function updateUserStatus(req: Request, res: Response) {
   try {
-    const adminId = (req as any).userId as string;
+    const adminId = req.userId;
     const userId = req.params.id;
     const { disabled } = req.body;
     if (typeof disabled !== 'boolean') return res.status(400).json({ error: 'disabled boolean required' });
@@ -34,7 +34,7 @@ export async function updateUserStatus(req: Request, res: Response) {
 
 export async function deleteUser(req: Request, res: Response) {
   try {
-    const adminId = (req as any).userId as string;
+    const adminId = req.userId;
     const userId = req.params.id;
 
     await adminUserService.deleteUser(adminId, userId);

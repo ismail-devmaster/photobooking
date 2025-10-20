@@ -27,7 +27,7 @@ function attachmentsFromFiles(files?: Express.Multer.File[]) {
  */
 export async function sendMessage(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const parsed = sendMessageSchema.safeParse(req.body);

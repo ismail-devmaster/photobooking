@@ -43,6 +43,8 @@ const router = (0, express_1.Router)();
 router.post('/', auth_middleware_1.authenticateAccessToken, (0, role_middleware_1.requireRole)(client_1.Role.PHOTOGRAPHER), pkgCtrl.createPackage);
 router.put('/:id', auth_middleware_1.authenticateAccessToken, (0, role_middleware_1.requireRole)(client_1.Role.PHOTOGRAPHER), pkgCtrl.updatePackage);
 router.delete('/:id', auth_middleware_1.authenticateAccessToken, (0, role_middleware_1.requireRole)(client_1.Role.PHOTOGRAPHER), pkgCtrl.deletePackage);
+// public listing all packages
+router.get('/', pkgCtrl.getAllPackages);
 // public listing by photographer
 router.get('/photographer/:id', pkgCtrl.getPackagesForPhotographer);
 exports.default = router;

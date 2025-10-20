@@ -1,91 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserProfile = getUserProfile;
-exports.updateUserProfile = updateUserProfile;
 exports.listPhotographers = listPhotographers;
 exports.getPhotographerById = getPhotographerById;
-// src/services/profile.service.ts
+exports.getPhotographerStats = getPhotographerStats;
+// src/services/photographer.service.ts
 const prisma_1 = require("../config/prisma");
-async function getUserProfile(userId) {
-    const profile = await prisma_1.prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-            id: true,
-            email: true,
-            name: true,
-            role: true,
-            locale: true,
-            phone: true,
-            emailVerified: true,
-            state: { select: { id: true, code: true, name: true } },
-            photographer: {
-                select: {
-                    id: true,
-                    bio: true,
-                    priceBaseline: true,
-                    verified: true,
-                    tags: true,
-                    state: { select: { id: true, code: true, name: true } },
-                    services: { select: { id: true, slug: true, name: true } },
-                    portfolios: { select: { id: true, title: true } },
-                },
-            },
-        },
-    });
-    if (!profile)
-        return null;
-    return {
-        ...profile,
-        photographerId: profile.photographer ? profile.photographer.id : null,
-    };
-}
-async function updateUserProfile(userId, payload) {
-    // payload may contain: name, phone, locale, stateId, photographer data if role=PHOTOGRAPHER
-    const { name, phone, locale, stateId, photographer } = payload;
-    // update user base fields
-    const user = await prisma_1.prisma.user.update({
-        where: { id: userId },
-        data: {
-            name: name ?? undefined,
-            phone: phone ?? undefined,
-            locale: locale ?? undefined,
-            stateId: stateId ?? undefined,
-        },
-    });
-    // if photographer payload present, update or create photographer profile
-    if (photographer) {
-        const existing = await prisma_1.prisma.photographer.findUnique({ where: { userId } });
-        if (existing) {
-            await prisma_1.prisma.photographer.update({
-                where: { userId },
-                data: {
-                    bio: photographer.bio ?? undefined,
-                    priceBaseline: photographer.priceBaseline ?? undefined,
-                    tags: photographer.tags ?? undefined,
-                    stateId: photographer.stateId ?? undefined,
-                    // services: array of service ids to set
-                    ...(photographer.serviceIds ? { services: { set: photographer.serviceIds.map((id) => ({ id })) } } : {}),
-                },
-            });
-        }
-        else {
-            // create new photographer profile
-            await prisma_1.prisma.photographer.create({
-                data: {
-                    userId,
-                    bio: photographer.bio ?? undefined,
-                    priceBaseline: photographer.priceBaseline ?? 0,
-                    tags: photographer.tags ?? [],
-                    stateId: photographer.stateId ?? undefined,
-                    services: photographer.serviceIds ? { connect: photographer.serviceIds.map((id) => ({ id })) } : {},
-                },
-            });
-        }
-    }
-    return getUserProfile(userId);
-}
 /**
- * listPhotographers supports advanced filters.
+ * List photographers with advanced filtering and pagination.
  * If currentUserId provided, we add isFavorited flag to each item.
  */
 async function listPhotographers(opts = {}) {
@@ -131,7 +52,7 @@ async function listPhotographers(opts = {}) {
         prisma_1.prisma.photographer.findMany({
             where,
             include: {
-                user: { select: { id: true, name: true } },
+                user: { select: { id: true, name: true, phone: true } },
                 services: { select: { id: true, name: true, slug: true } },
                 state: { select: { id: true, name: true, code: true } },
                 portfolios: { take: 1, select: { id: true, title: true, images: { take: 4 } } },
@@ -171,14 +92,105 @@ async function listPhotographers(opts = {}) {
         meta: { total, page: Number(page), perPage: take, pages: Math.ceil(total / take) },
     };
 }
+/**
+ * Get a single photographer by ID with full details
+ */
 async function getPhotographerById(photographerId) {
     return prisma_1.prisma.photographer.findUnique({
         where: { id: photographerId },
         include: {
-            user: { select: { id: true, name: true, email: true } },
+            user: { select: { id: true, name: true, email: true, phone: true } },
             services: { select: { id: true, name: true, slug: true } },
             state: { select: { id: true, name: true, code: true } },
-            portfolios: { select: { id: true, title: true } },
+            portfolios: {
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    images: {
+                        select: {
+                            id: true,
+                            url: true,
+                            meta: true
+                        }
+                    }
+                }
+            },
+            packages: {
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    priceCents: true
+                }
+            },
+            galleryImages: {
+                select: {
+                    id: true,
+                    url: true,
+                    meta: true
+                }
+            },
+            reviews: {
+                select: {
+                    id: true,
+                    rating: true,
+                    text: true,
+                    createdAt: true,
+                    reviewer: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 10
+            }
         },
     });
+}
+/**
+ * Get photographer statistics (for photographer dashboard)
+ */
+async function getPhotographerStats(photographerId) {
+    const [totalBookings, completedBookings, totalRevenue, averageRating, totalReviews, upcomingBookings] = await Promise.all([
+        prisma_1.prisma.booking.count({
+            where: { photographerId }
+        }),
+        prisma_1.prisma.booking.count({
+            where: {
+                photographerId,
+                state: 'completed'
+            }
+        }),
+        prisma_1.prisma.booking.aggregate({
+            where: {
+                photographerId,
+                state: 'completed'
+            },
+            _sum: { priceCents: true }
+        }),
+        prisma_1.prisma.photographer.findUnique({
+            where: { id: photographerId },
+            select: { ratingAvg: true, ratingCount: true }
+        }),
+        prisma_1.prisma.review.count({
+            where: { photographerId }
+        }),
+        prisma_1.prisma.booking.count({
+            where: {
+                photographerId,
+                state: { in: ['confirmed', 'in_progress'] }
+            }
+        })
+    ]);
+    return {
+        totalBookings,
+        completedBookings,
+        totalRevenue: totalRevenue._sum.priceCents || 0,
+        averageRating: averageRating?.ratingAvg || 0,
+        totalReviews,
+        upcomingBookings
+    };
 }

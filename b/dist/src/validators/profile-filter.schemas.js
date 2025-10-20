@@ -10,6 +10,7 @@ exports.photographerListQuery = zod_1.z.object({
     q: zod_1.z.string().max(200).optional(),
     tags: zod_1.z.string().optional(), // comma separated
     sort: zod_1.z.enum(['rating_desc', 'price_asc', 'price_desc', 'newest']).optional(),
-    page: zod_1.z.preprocess((v) => Number(v), zod_1.z.number().int().positive().default(1)),
-    perPage: zod_1.z.preprocess((v) => Number(v), zod_1.z.number().int().positive().default(12)),
+    // Ensure undefined/empty strings use defaults instead of NaN failing validation
+    page: zod_1.z.preprocess((v) => (v === undefined || v === '' ? undefined : Number(v)), zod_1.z.number().int().positive().default(1)),
+    perPage: zod_1.z.preprocess((v) => (v === undefined || v === '' ? undefined : Number(v)), zod_1.z.number().int().positive().default(12)),
 });

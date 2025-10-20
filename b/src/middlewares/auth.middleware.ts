@@ -32,9 +32,9 @@ export async function authenticateAccessToken(req: Request, res: Response, next:
     }
 
     // Attach strongly to request for downstream middlewares/controllers
-    (req as any).userId = user.id;
-    (req as any).userRole = user.role as Role;
-    (req as any).user = user;
+    req.userId = user.id;
+    req.userRole = user.role as Role;
+    req.user = user;
 
     next();
   } catch (err: any) {

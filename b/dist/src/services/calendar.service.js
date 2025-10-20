@@ -1,12 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCalendarEvent = createCalendarEvent;
+exports.updateCalendarEvent = updateCalendarEvent;
 exports.deleteCalendarEvent = deleteCalendarEvent;
 exports.listCalendarForPhotographer = listCalendarForPhotographer;
 exports.isPhotographerAvailable = isPhotographerAvailable;
 exports.findNextAvailableSlot = findNextAvailableSlot;
 // src/services/calendar.service.ts
 const prisma_1 = require("../config/prisma");
+const client_1 = require("@prisma/client");
 /**
  * Create a calendar block/event for a photographer (e.g., vacation, blocked time).
  * - startAt, endAt are Date or ISO strings.
@@ -29,6 +31,50 @@ async function createCalendarEvent(photographerId, payload) {
         },
     });
     return rec;
+}
+/**
+ * Update a calendar event (photographer only).
+ */
+async function updateCalendarEvent(eventId, photographerId, payload) {
+    // verify owner
+    const rec = await prisma_1.prisma.calendarEvent.findUnique({ where: { id: eventId } });
+    if (!rec)
+        throw new Error('Event not found');
+    if (rec.photographerId !== photographerId)
+        throw new Error('Not authorized');
+    const updateData = {};
+    if (payload.startAt !== undefined) {
+        updateData.startAt = new Date(payload.startAt);
+    }
+    if (payload.endAt !== undefined) {
+        updateData.endAt = new Date(payload.endAt);
+    }
+    if (payload.title !== undefined) {
+        updateData.title = payload.title;
+    }
+    if (payload.type !== undefined) {
+        updateData.type = payload.type;
+    }
+    // Validate dates if both are provided
+    if (updateData.startAt && updateData.endAt) {
+        if (updateData.endAt <= updateData.startAt) {
+            throw new Error('endAt must be after startAt');
+        }
+    }
+    else if (updateData.startAt && rec.endAt) {
+        if (rec.endAt <= updateData.startAt) {
+            throw new Error('endAt must be after startAt');
+        }
+    }
+    else if (updateData.endAt && rec.startAt) {
+        if (updateData.endAt <= rec.startAt) {
+            throw new Error('endAt must be after startAt');
+        }
+    }
+    return prisma_1.prisma.calendarEvent.update({
+        where: { id: eventId },
+        data: updateData,
+    });
 }
 /**
  * Delete a calendar event (photographer only).
@@ -117,8 +163,8 @@ async function isPhotographerAvailable(photographerId, startAt, endAt, opts) {
     // bookings conflict condition: bookings whose start < end && end > start (overlap)
     // choose states considered busy:
     const busyStates = opts?.includePending ? [
-        'requested', 'pending_payment', 'confirmed', 'in_progress'
-    ] : ['confirmed', 'in_progress'];
+        client_1.BookingState.requested, client_1.BookingState.pending_payment, client_1.BookingState.confirmed, client_1.BookingState.in_progress
+    ] : [client_1.BookingState.confirmed, client_1.BookingState.in_progress];
     const bookingConflict = await prisma_1.prisma.booking.findFirst({
         where: {
             photographerId,

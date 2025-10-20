@@ -41,4 +41,6 @@ const router = (0, express_1.Router)();
 router.get('/me', auth_middleware_1.authenticateAccessToken, notifCtrl.listMyNotifications);
 router.patch('/:id/read', auth_middleware_1.authenticateAccessToken, notifCtrl.markRead);
 router.post('/read-bulk', auth_middleware_1.authenticateAccessToken, notifCtrl.markReadBulk);
+router.patch('/read-all', auth_middleware_1.authenticateAccessToken, notifCtrl.markAllRead);
+router.delete('/read', auth_middleware_1.authenticateAccessToken, notifCtrl.deleteAllRead);
 exports.default = router;

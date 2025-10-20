@@ -5,16 +5,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.emitToUser = emitToUser;
 // src/server.ts
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
 const morgan_1 = __importDefault(require("morgan"));
 const helmet_1 = __importDefault(require("helmet"));
 const path_1 = __importDefault(require("path"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const cors_1 = __importDefault(require("cors"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const oauth_routes_1 = __importDefault(require("./routes/oauth.routes"));
 const profile_routes_1 = __importDefault(require("./routes/profile.routes"));
+const photographer_routes_1 = __importDefault(require("./routes/photographer.routes"));
 const package_routes_1 = __importDefault(require("./routes/package.routes"));
 const gallery_routes_1 = __importDefault(require("./routes/gallery.routes"));
 const booking_routes_1 = __importDefault(require("./routes/booking.routes"));
@@ -29,12 +33,19 @@ const admin_users_routes_1 = __importDefault(require("./routes/admin.users.route
 const admin_catalog_routes_1 = __importDefault(require("./routes/admin.catalog.routes"));
 const admin_stats_routes_1 = __importDefault(require("./routes/admin.stats.routes"));
 const calendar_routes_1 = __importDefault(require("./routes/calendar.routes"));
+const states_routes_1 = __importDefault(require("./routes/states.routes"));
 require("./config/passport"); // initialize passport strategies
 const passport_1 = __importDefault(require("passport"));
+const errors_1 = require("./types/errors");
 // --- App setup ---
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)());
 app.use((0, morgan_1.default)('dev'));
+app.use((0, cors_1.default)({
+    // origin: 'http://localhost:3000', // أو عنوان الواجهة الأمامية
+    origin: true,
+    credentials: true,
+}));
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use(passport_1.default.initialize());
@@ -44,6 +55,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/v1/auth', auth_routes_1.default);
 app.use('/api/v1/auth/oauth', oauth_routes_1.default);
 app.use('/api/v1', profile_routes_1.default);
+app.use('/api/v1/photographers', photographer_routes_1.default);
 app.use('/api/v1/packages', package_routes_1.default);
 app.use('/api/v1/gallery', gallery_routes_1.default);
 app.use('/api/v1/bookings', booking_routes_1.default);
@@ -58,10 +70,17 @@ app.use('/api/v1/admin', admin_users_routes_1.default);
 app.use('/api/v1/admin', admin_catalog_routes_1.default);
 app.use('/api/v1/admin', admin_stats_routes_1.default);
 app.use('/api/v1/calendar', calendar_routes_1.default);
+app.use('/api/v1/states', states_routes_1.default);
 // --- Global error handler ---
 app.use((err, req, res, next) => {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    // Handle custom AppError instances
+    if ((0, errors_1.isAppError)(err)) {
+        return res.status(err.statusCode).json({ error: err.message });
+    }
+    // Handle other errors
+    const message = err instanceof Error ? err.message : 'Internal Server Error';
+    res.status(500).json({ error: message });
 });
 // --- HTTP + Socket.IO setup ---
 const port = Number(process.env.PORT || 4000);

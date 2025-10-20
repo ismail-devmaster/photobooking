@@ -10,7 +10,7 @@ export async function listAllReviews(req: Request, res: Response) {
     const page = Number(req.query.page || '1');
     const perPage = Number(req.query.perPage || '50');
 
-    const result = await reviewService.adminListReviews({ status: status as any, page, perPage });
+    const result = await reviewService.adminListReviews({ status, page, perPage });
     return res.json(result);
   } catch (err: any) {
     console.error('admin listAllReviews error:', err);
@@ -26,7 +26,7 @@ export async function moderateReview(req: Request, res: Response) {
     const bodyParsed = adminReviewActionSchema.safeParse(req.body);
     if (!bodyParsed.success) return res.status(400).json({ error: 'Validation failed', issues: bodyParsed.error.issues });
 
-    const adminUserId = (req as any).userId as string;
+    const adminUserId = req.userId;
     if (!adminUserId) return res.status(401).json({ error: 'Unauthorized' });
 
     const { action, reason } = bodyParsed.data;

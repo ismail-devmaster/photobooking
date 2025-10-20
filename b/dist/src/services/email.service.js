@@ -7,7 +7,7 @@ exports.sendVerificationEmail = sendVerificationEmail;
 // src/services/email.service.ts
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const FROM_EMAIL = process.env.FROM_EMAIL || 'no-reply@local.test';
-const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:4000';
+const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 let transporter = null;
 let usingTestAccount = false;
 async function initTransporter() {
@@ -62,7 +62,7 @@ async function initTransporter() {
  */
 async function sendVerificationEmail(to, name, token, userId) {
     const transport = await initTransporter();
-    const verifyUrl = `${APP_BASE_URL.replace(/\/$/, '')}/api/v1/auth/verify-email?token=${encodeURIComponent(token)}&uid=${encodeURIComponent(userId)}`;
+    const verifyUrl = `${NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/auth/verify-email?token=${encodeURIComponent(token)}&uid=${encodeURIComponent(userId)}`;
     const subject = 'Verify your email';
     const text = `Hi ${name || ''},
 

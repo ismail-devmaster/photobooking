@@ -42,6 +42,7 @@ const client_1 = require("@prisma/client");
 const router = (0, express_1.Router)();
 // Photographer manages own calendar blocks
 router.post('/', auth_middleware_1.authenticateAccessToken, (0, role_middleware_1.requireRole)(client_1.Role.PHOTOGRAPHER), calendarCtrl.createBlock);
+router.put('/:id', auth_middleware_1.authenticateAccessToken, (0, role_middleware_1.requireRole)(client_1.Role.PHOTOGRAPHER), calendarCtrl.updateBlock);
 router.delete('/:id', auth_middleware_1.authenticateAccessToken, (0, role_middleware_1.requireRole)(client_1.Role.PHOTOGRAPHER), calendarCtrl.deleteBlock);
 // Public: view calendar for photographer (merged bookings + blocks)
 router.get('/photographer/:id', calendarCtrl.getPhotographerCalendar);

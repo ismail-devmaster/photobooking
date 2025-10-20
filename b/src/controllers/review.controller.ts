@@ -5,7 +5,7 @@ import * as reviewService from '../services/review.service';
 
 export async function createReview(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const parsed = createReviewSchema.safeParse(req.body);
@@ -40,7 +40,7 @@ export async function listPhotographerReviews(req: Request, res: Response) {
 
 export async function listMyReviews(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const page = Number(req.query.page || '1');
     const perPage = Number(req.query.perPage || '50');

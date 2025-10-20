@@ -33,25 +33,27 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-// src/routes/conversation.routes.ts
-const express_1 = require("express");
-const convCtrl = __importStar(require("../controllers/conversation.controller"));
-const msgCtrl = __importStar(require("../controllers/message.controller"));
-const auth_middleware_1 = require("../middlewares/auth.middleware");
-const multer_1 = require("../config/multer"); // multer config
-const router = (0, express_1.Router)();
-// create conversation (or find existing)
-router.post('/', auth_middleware_1.authenticateAccessToken, convCtrl.createConversation);
-// list my conversations
-router.get('/', auth_middleware_1.authenticateAccessToken, convCtrl.listConversations);
-// get messages in a conversation (where :id is conversationId)
-router.get('/:id/messages', auth_middleware_1.authenticateAccessToken, convCtrl.getMessages);
-// send message in conversation (where :id is conversationId, with optional attachments)
-router.post('/:id/messages', auth_middleware_1.authenticateAccessToken, multer_1.upload.array('attachments', 5), async (req, res, next) => {
-    // inject conversationId into body and forward to sendMessage handler
-    req.body.conversationId = req.params.id;
-    return msgCtrl.sendMessage(req, res);
-});
-// mark conversation read (where :id is conversationId)
-router.patch('/:id/read', auth_middleware_1.authenticateAccessToken, convCtrl.markRead);
-exports.default = router;
+exports.listStates = listStates;
+exports.listAllStates = listAllStates;
+const stateService = __importStar(require("../services/state.service"));
+async function listStates(req, res) {
+    try {
+        const search = req.query.search || null;
+        const page = req.query.page ? Number(req.query.page) : undefined;
+        const perPage = req.query.perPage ? Number(req.query.perPage) : undefined;
+        const data = await stateService.listStates({ search, page, perPage });
+        return res.json(data);
+    }
+    catch (err) {
+        return res.status(500).json({ error: 'Could not list states' });
+    }
+}
+async function listAllStates(req, res) {
+    try {
+        const items = await stateService.listAllStates();
+        return res.json({ items });
+    }
+    catch (err) {
+        return res.status(500).json({ error: 'Could not fetch states' });
+    }
+}

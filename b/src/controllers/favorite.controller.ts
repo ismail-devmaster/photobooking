@@ -7,7 +7,7 @@ export async function createFavorite(req: Request, res: Response) {
     const parsed = photographerIdParam.safeParse(req.params);
     if (!parsed.success) return res.status(400).json({ error: 'Invalid photographer id' });
 
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const photographerId = parsed.data.photographerId;
@@ -24,7 +24,7 @@ export async function deleteFavorite(req: Request, res: Response) {
     const parsed = photographerIdParam.safeParse(req.params);
     if (!parsed.success) return res.status(400).json({ error: 'Invalid photographer id' });
 
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const rec = await favService.removeFavorite(userId, parsed.data.photographerId);
@@ -41,7 +41,7 @@ export async function listMyFavorites(req: Request, res: Response) {
     const qp = listFavoritesQuery.parse(req.query);
     const page = qp.page ?? 1;
     const perPage = qp.perPage ?? 12;
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const result = await favService.listFavorites(userId, page, perPage);

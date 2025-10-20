@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listUsers = listUsers;
 exports.updateUserStatus = updateUserStatus;
+exports.deleteUser = deleteUser;
 const adminUserService = __importStar(require("../services/adminUser.service"));
 async function listUsers(req, res) {
     try {
@@ -63,5 +64,17 @@ async function updateUserStatus(req, res) {
     catch (err) {
         console.error('updateUserStatus error', err);
         return res.status(400).json({ error: err.message || 'Could not update user status' });
+    }
+}
+async function deleteUser(req, res) {
+    try {
+        const adminId = req.userId;
+        const userId = req.params.id;
+        await adminUserService.deleteUser(adminId, userId);
+        return res.json({ success: true, message: 'User deleted successfully' });
+    }
+    catch (err) {
+        console.error('deleteUser error', err);
+        return res.status(400).json({ error: err.message || 'Could not delete user' });
     }
 }

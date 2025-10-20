@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listUsers = listUsers;
 exports.setUserDisabled = setUserDisabled;
+exports.deleteUser = deleteUser;
 // src/services/adminUser.service.ts
 const prisma_1 = require("../config/prisma");
 /**
@@ -70,4 +71,26 @@ async function setUserDisabled(adminId, userId, disabled) {
         },
     });
     return updated;
+}
+/**
+ * Delete a user permanently
+ */
+async function deleteUser(adminId, userId) {
+    // Prevent admin from deleting themselves
+    if (adminId === userId) {
+        throw new Error('Admins cannot delete their own account');
+    }
+    // Check if user exists
+    const user = await prisma_1.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, role: true }
+    });
+    if (!user) {
+        throw new Error('User not found');
+    }
+    // Delete the user - cascading deletes will handle related records
+    await prisma_1.prisma.user.delete({
+        where: { id: userId }
+    });
+    return { deletedUser: user };
 }

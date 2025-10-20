@@ -124,7 +124,7 @@ export async function getPhotographer(req: Request, res: Response) {
 export async function getPhotographerStats(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const userId = (req as any).userId;
+    const userId = req.userId;
 
     if (!id) {
       return res.status(400).json({ error: 'Photographer ID is required' });
@@ -138,7 +138,7 @@ export async function getPhotographerStats(req: Request, res: Response) {
     }
 
     // Check if user is the photographer or admin
-    const userRole = (req as any).userRole;
+    const userRole = req.userRole;
     if (photographer.user.id !== userId && userRole !== 'ADMIN') {
       return res.status(403).json({ error: 'Unauthorized to view photographer stats' });
     }

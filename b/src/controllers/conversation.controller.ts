@@ -7,7 +7,7 @@ import * as conversationService from '../services/conversation.service';
 
 export async function createConversation(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const parsed = createConversationSchema.safeParse(req.body);
@@ -26,7 +26,7 @@ export async function createConversation(req: Request, res: Response) {
 
 export async function listConversations(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const q = listConversationsQuery.parse(req.query);
@@ -40,7 +40,7 @@ export async function listConversations(req: Request, res: Response) {
 
 export async function getMessages(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId; // from auth middleware
+    const userId = req.userId; // from auth middleware
     const conversationId = req.params.id; // from /conversations/:id/messages
 
     // Validate conversation ID parameter
@@ -76,7 +76,7 @@ export async function getMessages(req: Request, res: Response) {
 
 export async function markRead(req: Request, res: Response) {
   try {
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     const pid = conversationIdParam.safeParse(req.params);
     if (!pid.success) return res.status(400).json({ error: 'Invalid conversation id' });
 

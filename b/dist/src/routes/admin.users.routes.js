@@ -44,4 +44,6 @@ router.get('/users', auth_middleware_1.authenticateAccessToken, isAdmin_middlewa
 // PATCH /admin/users/:id/status
 // body: { disabled: boolean }
 router.patch('/users/:id/status', auth_middleware_1.authenticateAccessToken, isAdmin_middleware_1.isAdmin, adminCtrl.updateUserStatus);
+// DELETE /admin/users/:id
+router.delete('/users/:id', auth_middleware_1.authenticateAccessToken, isAdmin_middleware_1.isAdmin, adminCtrl.deleteUser);
 exports.default = router;

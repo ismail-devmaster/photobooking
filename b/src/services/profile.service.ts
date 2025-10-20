@@ -1,7 +1,8 @@
 // src/services/profile.service.ts
 import { prisma } from '../config/prisma';
+import { UpdateUserProfilePayload, UserProfileResponse } from '../types/profile';
 
-export async function getUserProfile(userId: string) {
+export async function getUserProfile(userId: string): Promise<UserProfileResponse | null> {
   const profile = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -32,11 +33,11 @@ export async function getUserProfile(userId: string) {
 
   return {
     ...profile,
-    photographerId: profile.photographer ? profile.photographer.id : "gg",
-  } as any;
+    photographerId: profile.photographer ? profile.photographer.id : null,
+  };
 }
 
-export async function updateUserProfile(userId: string, payload: any) {
+export async function updateUserProfile(userId: string, payload: UpdateUserProfilePayload) {
   // payload may contain: name, phone, locale, stateId, photographer data if role=PHOTOGRAPHER
   const { name, phone, locale, stateId, photographer } = payload;
 
@@ -114,7 +115,7 @@ export async function listPhotographers(opts: PhotographerListOpts & { currentUs
     currentUserId,
   } = opts;
 
-  const where: any = { verified: true };
+  const where: { verified: boolean; [key: string]: any } = { verified: true };
 
   if (stateId) where.stateId = stateId;
   if (serviceId) where.services = { some: { id: serviceId } };
@@ -143,7 +144,7 @@ export async function listPhotographers(opts: PhotographerListOpts & { currentUs
   const take = Math.min(100, Number(perPage) || 12);
 
   // sort mapping
-  const orderBy: any = [];
+  const orderBy: { [key: string]: 'asc' | 'desc' }[] = [];
   if (sort === 'rating_desc') orderBy.push({ ratingAvg: 'desc' });
   else if (sort === 'price_asc') orderBy.push({ priceBaseline: 'asc' });
   else if (sort === 'price_desc') orderBy.push({ priceBaseline: 'desc' });

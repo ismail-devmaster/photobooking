@@ -213,12 +213,23 @@ async function me(req, res) {
     const userId = req.userId;
     if (!userId)
         return res.status(401).json({ error: 'Unauthorized' });
-    const user = await prisma_1.prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma_1.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+            photographer: {
+                include: {
+                    services: true,
+                    portfolios: true,
+                },
+            },
+        },
+    });
     if (!user)
         return res.status(404).json({ error: 'User not found' });
     // 🚨 تأكد أن البريد مفعّل
     if (!user.emailVerified) {
         return res.status(403).json({ error: 'Email not verified' });
     }
-    return res.json({ id: user.id, email: user.email, name: user.name, role: user.role });
+    // Return the full user object with photographer relation
+    return res.json(user);
 }

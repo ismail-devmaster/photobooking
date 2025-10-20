@@ -7,7 +7,7 @@ export async function generateContract(req: Request, res: Response) {
   try {
     const parsed = generateContractSchema.parse(req.body);
     const bookingId = parsed.bookingId;
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const result = await contractService.generateContractForBooking(bookingId, userId);
@@ -52,7 +52,7 @@ export async function signContract(req: Request, res: Response) {
   try {
     const params = contractIdParam.parse(req.params);
     const parsed = signContractSchema.parse(req.body);
-    const userId = (req as any).userId as string;
+    const userId = req.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const updated = await contractService.signContract(params.id, userId, parsed.signatureDataUrl, parsed.signerName);

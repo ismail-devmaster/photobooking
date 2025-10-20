@@ -42,7 +42,7 @@ async function listAllReviews(req, res) {
         const status = req.query.status;
         const page = Number(req.query.page || '1');
         const perPage = Number(req.query.perPage || '50');
-        const result = await reviewService.adminListReviews({ status: status, page, perPage });
+        const result = await reviewService.adminListReviews({ status, page, perPage });
         return res.json(result);
     }
     catch (err) {

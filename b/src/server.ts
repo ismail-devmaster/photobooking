@@ -32,6 +32,7 @@ import statesRoutes from './routes/states.routes';
 
 import './config/passport'; // initialize passport strategies
 import passport from 'passport';
+import { AppError, isAppError } from './types/errors';
 
 // --- App setup ---
 const app = express();
@@ -73,9 +74,17 @@ app.use('/api/v1/calendar', calendarRoutes);
 app.use('/api/v1/states', statesRoutes);
 
 // --- Global error handler ---
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err);
-  res.status(500).json({ error: 'Internal Server Error' });
+  
+  // Handle custom AppError instances
+  if (isAppError(err)) {
+    return res.status(err.statusCode).json({ error: err.message });
+  }
+  
+  // Handle other errors
+  const message = err instanceof Error ? err.message : 'Internal Server Error';
+  res.status(500).json({ error: message });
 });
 
 // --- HTTP + Socket.IO setup ---

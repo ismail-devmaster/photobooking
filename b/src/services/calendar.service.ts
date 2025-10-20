@@ -1,6 +1,7 @@
 // src/services/calendar.service.ts
 import { prisma } from '../config/prisma';
 import { subMilliseconds } from 'date-fns';
+import { BookingState } from '@prisma/client';
 
 /**
  * Create a calendar block/event for a photographer (e.g., vacation, blocked time).
@@ -180,14 +181,14 @@ export async function isPhotographerAvailable(photographerId: string, startAt: D
 
   // bookings conflict condition: bookings whose start < end && end > start (overlap)
   // choose states considered busy:
-  const busyStates = opts?.includePending ? [
-    'requested', 'pending_payment', 'confirmed', 'in_progress'
-  ] : ['confirmed', 'in_progress'];
+  const busyStates: BookingState[] = opts?.includePending ? [
+    BookingState.requested, BookingState.pending_payment, BookingState.confirmed, BookingState.in_progress
+  ] : [BookingState.confirmed, BookingState.in_progress];
 
   const bookingConflict = await prisma.booking.findFirst({
     where: {
       photographerId,
-      state: { in: busyStates as any },
+      state: { in: busyStates },
       AND: [
         { startAt: { lt: endAt } },
         { endAt: { gt: startAt } },

@@ -14,8 +14,8 @@ export async function updateBookingState(req: Request, res: Response) {
       return res.status(400).json({ error: 'Validation failed', issues: bodyParsed.error.issues });
     }
 
-    const userId = (req as any).userId as string | undefined;
-    const userRole = (req as any).userRole as Role | undefined;
+    const userId = req.userId;
+    const userRole = req.userRole;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const result = await transitionBookingState({

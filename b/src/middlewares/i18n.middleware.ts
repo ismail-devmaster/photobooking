@@ -20,8 +20,8 @@ locale = req.query.lang;
 }
 
 // 2) cookie
-if (!locale && (req as any).cookies && (req as any).cookies.locale) {
-locale = (req as any).cookies.locale;
+if (!locale && req.cookies && req.cookies.locale) {
+locale = req.cookies.locale;
 }
 
 
@@ -55,8 +55,8 @@ if (lang) locale = lang;
 if (!locale) locale = DEFAULT;
 
 
-(req as any).locale = locale;
-(req as any).t = (key: string, vars?: Record<string, any>) => t(locale, key, vars);
+req.locale = locale;
+req.t = (key: string, vars?: Record<string, any>) => t(locale, key, vars);
 res.locals.locale = locale;
 res.locals.t = (key: string, vars?: Record<string, any>) => t(locale, key, vars);
 
@@ -65,8 +65,8 @@ next();
 } catch (err) {
 // don't block the request due to i18n errors
 console.error('i18nMiddleware error', err);
-(req as any).locale = DEFAULT;
-(req as any).t = (key: string, vars?: Record<string, any>) => t(DEFAULT, key, vars);
+req.locale = DEFAULT;
+req.t = (key: string, vars?: Record<string, any>) => t(DEFAULT, key, vars);
 res.locals.locale = DEFAULT;
 res.locals.t = (key: string, vars?: Record<string, any>) => t(DEFAULT, key, vars);
 next();
