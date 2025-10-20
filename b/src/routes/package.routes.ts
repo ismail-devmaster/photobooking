@@ -11,6 +11,9 @@ router.post('/', authenticateAccessToken, requireRole(Role.PHOTOGRAPHER), pkgCtr
 router.put('/:id', authenticateAccessToken, requireRole(Role.PHOTOGRAPHER), pkgCtrl.updatePackage);
 router.delete('/:id', authenticateAccessToken, requireRole(Role.PHOTOGRAPHER), pkgCtrl.deletePackage);
 
+// public listing all packages
+router.get('/', pkgCtrl.getAllPackages);
+
 // public listing by photographer
 router.get('/photographer/:id', pkgCtrl.getPackagesForPhotographer);
 

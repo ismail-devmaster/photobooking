@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as pkgService from '../services/package.service';
+import { listAllPackages } from '../services/package.service';
 import { createPackageSchema, updatePackageSchema } from '../validators/package.schemas';
 
 export async function createPackage(req: Request, res: Response) {
@@ -64,6 +65,19 @@ export async function getPackagesForPhotographer(req: Request, res: Response) {
     return res.json(list);
   } catch (err: any) {
     console.error(err);
+    return res.status(500).json({ error: 'Could not list packages' });
+  }
+}
+
+export async function getAllPackages(req: Request, res: Response) {
+  try {
+    const page = req.query.page ? Number(req.query.page) : undefined;
+    const perPage = req.query.perPage ? Number(req.query.perPage) : undefined;
+
+    const result = await listAllPackages({ page, perPage });
+    return res.json(result);
+  } catch (err: any) {
+    console.error('getAllPackages error', err);
     return res.status(500).json({ error: 'Could not list packages' });
   }
 }

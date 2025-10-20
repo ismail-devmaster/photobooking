@@ -41,3 +41,25 @@ export async function listPackagesForPhotographer(photographerId: string) {
     orderBy: { createdAt: 'desc' },
   });
 }
+
+export async function listAllPackages(opts?: { page?: number; perPage?: number }) {
+  const page = Math.max(1, Number(opts?.page || 1));
+  const perPage = Math.min(200, Number(opts?.perPage || 50));
+  const skip = (page - 1) * perPage;
+
+  const [items, total] = await Promise.all([
+    prisma.package.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        photographer: {
+          select: { id: true}
+        },
+      },
+      skip,
+      take: perPage,
+    }),
+    prisma.package.count(),
+  ]);
+
+  return { items, meta: { total, page, perPage, pages: Math.ceil(total / perPage) } };
+}

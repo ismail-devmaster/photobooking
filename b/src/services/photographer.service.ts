@@ -70,7 +70,7 @@ export async function listPhotographers(opts: PhotographerListOpts & { currentUs
     prisma.photographer.findMany({
       where,
       include: {
-        user: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, phone: true } },
         services: { select: { id: true, name: true, slug: true } },
         state: { select: { id: true, name: true, code: true } },
         portfolios: { take: 1, select: { id: true, title: true, images: { take: 4 } } },
@@ -121,7 +121,7 @@ export async function getPhotographerById(photographerId: string) {
   return prisma.photographer.findUnique({
     where: { id: photographerId },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true, phone: true } },
       services: { select: { id: true, name: true, slug: true } },
       state: { select: { id: true, name: true, code: true } },
       portfolios: { 
