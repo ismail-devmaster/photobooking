@@ -342,8 +342,22 @@ model Package {
   updatedAt      DateTime @updatedAt
 
   photographer Photographer @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  images      PackageImage[] // Add this relation
 
   @@index([photographerId])
+}
+model PackageImage {
+  id        String   @id @default(cuid())
+  packageId String
+  url       String
+  meta      Json?
+  createdAt DateTime @default(now())
+  order     Int      @default(0) // for ordering images
+
+  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([packageId])
+  @@index([packageId, order])
 }
 
 model GalleryImage {

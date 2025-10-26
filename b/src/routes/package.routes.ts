@@ -7,7 +7,8 @@ import { Role } from '@prisma/client';
 const router = Router();
 
 // photographer-only create/update/delete
-router.post('/', authenticateAccessToken, requireRole(Role.PHOTOGRAPHER), pkgCtrl.createPackage);
+// router.post('/', authenticateAccessToken, requireRole(Role.PHOTOGRAPHER), pkgCtrl.createPackage);
+router.post('/', authenticateAccessToken, pkgCtrl.createPackage);
 router.put('/:id', authenticateAccessToken, requireRole(Role.PHOTOGRAPHER), pkgCtrl.updatePackage);
 router.delete('/:id', authenticateAccessToken, requireRole(Role.PHOTOGRAPHER), pkgCtrl.deletePackage);
 

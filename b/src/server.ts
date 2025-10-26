@@ -29,6 +29,7 @@ import adminCatalogRoutes from './routes/admin.catalog.routes';
 import adminStatsRoutes from './routes/admin.stats.routes';
 import calendarRoutes from './routes/calendar.routes';
 import statesRoutes from './routes/states.routes';
+import uploadsRoutes from './routes/uploads.routes';
 
 import './config/passport'; // initialize passport strategies
 import passport from 'passport';
@@ -40,8 +41,8 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(
   cors({
-    // origin: 'http://localhost:3000', // أو عنوان الواجهة الأمامية
-    origin: true,
+    origin: 'http://localhost:3000', // أو عنوان الواجهة الأمامية
+    // origin: true,
     credentials: true,
   }),
 );
@@ -59,6 +60,7 @@ app.use('/api/v1', profileRoutes);
 app.use('/api/v1/photographers', photographerRoutes);
 app.use('/api/v1/packages', packageRoutes);
 app.use('/api/v1/gallery', galleryRoutes);
+app.use('/api/v1/uploads', uploadsRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/favorites', favoritesRoutes);
 app.use('/api/v1/reviews', reviewRoutes);

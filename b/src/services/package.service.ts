@@ -1,3 +1,4 @@
+// package.service.ts
 import { prisma } from '../config/prisma';
 import { CreatePackageData, UpdatePackageData } from '../types/package';
 
@@ -8,6 +9,17 @@ export async function createPackage(photographerId: string, data: CreatePackageD
       title: data.title,
       description: data.description,
       priceCents: data.priceCents,
+      images: data.imageUrls ? {
+        create: data.imageUrls.map((url, index) => ({
+          url,
+          order: index,
+        })),
+      } : undefined,
+    },
+    include: {
+      images: {
+        orderBy: { order: 'asc' }
+      }
     },
   });
 }
@@ -24,6 +36,20 @@ export async function updatePackage(packageId: string, photographerId: string, d
       title: data.title ?? undefined,
       description: data.description ?? undefined,
       priceCents: data.priceCents ?? undefined,
+      ...(data.imageUrls !== undefined && {
+        images: {
+          deleteMany: {}, // Remove existing images
+          create: data.imageUrls.map((url, index) => ({
+            url,
+            order: index,
+          })),
+        },
+      }),
+    },
+    include: {
+      images: {
+        orderBy: { order: 'asc' }
+      }
     },
   });
 }
@@ -40,6 +66,11 @@ export async function listPackagesForPhotographer(photographerId: string) {
   return prisma.package.findMany({
     where: { photographerId },
     orderBy: { createdAt: 'desc' },
+    include: {
+      images: {
+        orderBy: { order: 'asc' }
+      }
+    },
   });
 }
 
@@ -53,7 +84,10 @@ export async function listAllPackages(opts?: { page?: number; perPage?: number }
       orderBy: { createdAt: 'desc' },
       include: {
         photographer: {
-          select: { id: true}
+          select: { id: true }
+        },
+        images: {
+          orderBy: { order: 'asc' }
         },
       },
       skip,

@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "@prisma/client": "^6.16.2",
-    "@types/cors": "^2.8.19",
     "@types/multer": "^2.0.0",
     "@types/pdfkit": "^0.17.2",
     "cookie-parser": "^1.4.7",
@@ -26,6 +25,7 @@
     "@faker-js/faker": "^10.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.9",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
